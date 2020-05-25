@@ -1,3 +1,5 @@
+#some tasks are modified from https://github.com/large-scale-gxe-methods/genotype-conversion/blob/master/genotype_conversion.wdl
+
 task run_ld_prune {
   
 	File genotype_bed
@@ -8,12 +10,12 @@ task run_ld_prune {
 
 	File genotype_pruned_pca
 
-        command {
+    command {
 		
-            plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep-pairwise 100 20 0.2 --out check
-	        plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --extract check.prune.in --make-bed --out ${genotype_pruned_plink}
-	        plink --threads ${threads} --bfile ${genotype_pruned_plink} --pca --out ${genotype_pruned_pca}
-   		 }
+        plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep-pairwise 100 20 0.2 --out check
+	    plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --extract check.prune.in --make-bed --out ${genotype_pruned_plink}
+	    plink --threads ${threads} --bfile ${genotype_pruned_plink} --pca --out ${genotype_pruned_pca}
+   	}
 
 
 	runtime {
@@ -23,16 +25,114 @@ task run_ld_prune {
 		gpu: false
 	}
 
-        output {
-		File genotype_pruned_pca = "genotype_pruned_pca"
-        }
+    output {
+	    File genotype_pruned_pca = "genotype_pruned_pca"
+    }
 }
 
-task lift_over_plink {
-    
+task plink_bed_subset_sample {
+  
+	File genotype_bed
+	File genotype_bim
+	File genotype_fam
+    File samples_to_keep_file
 
+    String plink_bed_prefix
+
+	
+    command {
+		
+	    plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${samples_to_keep_file} --make-bed --out ${plink_bed_prefix}
+
+   	}
+
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File plink_bed = ${plink_bed_prefix}.bed
+        File plink_bim = ${plink_bed_prefix}.bim
+        File plink_fam = ${plink_bed_prefix}.fam
+    }
 }
 
+task run_crossmap {
+    File input_file
+	File chain_file
+    String type
+    String prefix = basename(vcf_file, ".${type}")
+
+    command {
+		
+       CrossMap.py ${type} ${chain_file} ${input_file} ${prefix}.${type}
+   	}    
+
+	runtime {
+		docker: "crukcibioinformatics/crossmap"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File output = ${prefix}.${type}
+    }
+}
+
+task vcf_to_plink_bed {
+
+	File vcf_file
+    String prefix = basename(vcf_file, ".vcf")
+	Int? memory = 10
+	Int? disk = 20
+
+	command {
+		plink --vcf ${vcf_file}  --make-bed --out ${prefix}
+	}
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+	output {
+		File out_bed = "${prefix}.bed"
+		File out_bim = "${prefix}.bim"
+		File out_fam = "${prefix}.fam"
+	}
+}
+
+task plink_to_vcf {
+
+	File genotype_bed
+	File genotype_bim
+	File genotype_fam
+	String prefix = basename(genotype_bed, ".bed")
+	Int? memory = 16
+	Int? disk = 100
+
+	command {
+        plink --bfile ${prefix} --recode vcf --out ${prefix}.vcf   
+	}
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+	output {
+		File out_vcf = "${prefix}.vcf"
+	}
+}
 
 workflow run_plink {
 
