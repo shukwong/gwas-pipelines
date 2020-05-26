@@ -11,7 +11,7 @@ task run_ld_prune {
 
 	File genotype_pruned_pca
 
-    command {
+    command<<<
 		
         plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep-pairwise 100 20 0.2 --out check
 	    plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --extract check.prune.in --make-bed --out ${genotype_pruned_plink}
@@ -30,7 +30,7 @@ task run_ld_prune {
         plink --keep-allele-order --bfile /mnt/data/munge/ld_indep_check.prune \
               --extract ld_indep_pairwise_check.prune.in \
               --make-bed --out ${genotype_pruned_plink}
-   	}
+   	>>>
 
 
 	runtime {
@@ -41,13 +41,10 @@ task run_ld_prune {
 	}
 
     output {
-	    #File genotype_pruned_bed = ${genotype_pruned_plink}.bed
-        #File genotype_pruned_bed = ${genotype_pruned_plink}.bed
-        #File genotype_pruned_bed = ${genotype_pruned_plink}.bed
+	    File genotype_pruned_bed = "${genotype_pruned_plink}.bed"
+        File genotype_pruned_bed = "${genotype_pruned_plink}.bed"
+        File genotype_pruned_bed = "${genotype_pruned_plink}.bed"
 
-        File genotypeprunedbed = ${genotype_pruned_plink}.bed
-        File genotypeprunedbed = ${genotype_pruned_plink}.bed
-        File genotypeprunedbed = ${genotype_pruned_plink}.bed
     }
 }
 
