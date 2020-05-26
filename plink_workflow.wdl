@@ -1,23 +1,19 @@
-version 1.0
 #some tasks are modified from https://github.com/large-scale-gxe-methods/genotype-conversion/blob/master/genotype_conversion.wdl
 
 task run_ld_prune {
   
-	File genotype_bed
-	File genotype_bim
-	File genotype_fam
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
 
     String genotype_pruned_plink
 
-	File genotype_pruned_pca
+
+    Int? memory = 32
+    Int? disk = 500
 
     command<<<
 		
-        plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep-pairwise 100 20 0.2 --out check
-	    plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --extract check.prune.in --make-bed --out ${genotype_pruned_plink}
-	    plink --threads ${threads} --bfile ${genotype_pruned_plink} --pca --out ${genotype_pruned_pca}
-
-
         plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep 50 5 2 --out ld_indep_check
 
         plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} \
@@ -41,25 +37,26 @@ task run_ld_prune {
 	}
 
     output {
-	    File genotype_pruned_bed = "${genotype_pruned_plink}.bed"
-        File genotype_pruned_bed = "${genotype_pruned_plink}.bed"
-        File genotype_pruned_bed = "${genotype_pruned_plink}.bed"
+	File genotype_pruned_bed = "${genotype_pruned_plink}.bed"
+        File genotype_pruned_bim = "${genotype_pruned_plink}.bim"
+        File genotype_pruned_fam = "${genotype_pruned_plink}.fam"
 
     }
 }
 
 task plink_pca {
     File genotype_bed
-	File genotype_bim
-	File genotype_fam
+    File genotype_bim
+    File genotype_fam
 
     String? approx="approx"
 
-    String genotype_pruned_pca
 
+    Int? memory = 60
+    Int? disk = 500
 
     command {
-		/plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --pca ${approx} --out ${genotype_pruned_pca}
+		/plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --pca ${approx} --out genotype_pruned_pca
    	}
 
 
@@ -71,19 +68,23 @@ task plink_pca {
 	}
 
     output {
-	    File genotype_pruned_pca = "genotype_pruned_pca"
+	File genotype_pruned_pca_eigenvec = "genotype_pruned_pca.eigenvec"
+	File genotype_pruned_pca_eigenval = "genotype_pruned_pca.eigenval"
+        File genotype_pruned_pca_log = "genotype_pruned_pca.log"
     }
 }
 
 task plink_bed_subset_sample {
   
-	File genotype_bed
-	File genotype_bim
-	File genotype_fam
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
     File samples_to_keep_file
 
     String plink_bed_prefix
 
+    Int? memory = 32
+    Int? disk = 500
 	
     command {
 		
@@ -100,7 +101,7 @@ task plink_bed_subset_sample {
 	}
 
     output {
-	    File plink_bed = "${plink_bed_prefix}.bed"
+	File plink_bed = "${plink_bed_prefix}.bed"
         File plink_bim = "${plink_bed_prefix}.bim"
         File plink_fam = "${plink_bed_prefix}.fam"
     }
@@ -108,11 +109,14 @@ task plink_bed_subset_sample {
 
 task subset_plink_and_update_bim {
     File genotype_bed
-	File genotype_bim
-	File genotype_fam
+    File genotype_bim
+    File genotype_fam
     File mapped_ids
-	File mapped_bim
-    
+    File mapped_bim
+   
+    Int? memory = 32
+    Int? disk = 500
+ 
     command {
 		
         plink \
@@ -131,9 +135,9 @@ task subset_plink_and_update_bim {
 	}
 
     output {
-	    File output_bed = genotypes_updated.bed
-        File output_bim = genotypes_updated.bim
-        File output_fam = genotypes_updated.fam
+	File output_bed = "genotypes_updated.bed"
+        File output_bim = "genotypes_updated.bim"
+        File output_fam = "genotypes_updated.fam"
     }
 }
 
@@ -144,6 +148,8 @@ task liftover_plink_bim {
 
     File chain_file
 
+    Int? memory = 32
+    Int? disk = 500
 
     command<<<
 		
@@ -177,11 +183,12 @@ task liftover_plink_bim {
 
 task vcf_to_bgen {
 
-	File vcf_file
+    File vcf_file
     String prefix = basename(vcf_file, ".vcf.gz")
-	Int? memory = 10
-	Int? disk = 20
     Int? bits=8
+
+    Int? memory = 60
+    Int? disk = 500
 
 	command {
         /plink2 --vcf ${vcf_file} \
@@ -209,8 +216,8 @@ task vcf_to_plink_bed {
 
 	File vcf_file
     String prefix = basename(vcf_file, ".vcf")
-	Int? memory = 10
-	Int? disk = 20
+	Int? memory = 32
+	Int? disk = 500
 
 	command {
 		plink --vcf ${vcf_file}  --make-bed --out ${prefix}
@@ -236,8 +243,8 @@ task plink_to_vcf {
 	File genotype_bim
 	File genotype_fam
 	String prefix = basename(genotype_bed, ".bed")
-	Int? memory = 16
-	Int? disk = 100
+	Int? memory = 32
+	Int? disk = 500
 
 	command {
         plink --bfile ${prefix} --recode vcf --out ${prefix}.vcf   
@@ -261,19 +268,18 @@ workflow run_preprocess {
 	File genotype_bim
 	File genotype_fam
 	
-    String genotype_pruned_plink
+    	File chain_file
 
 	Int? memory = 60
-	Int? disk = 100
+	Int? disk = 500
 	Int? threads = 16
- 
+
     call liftover_plink_bim {
         input:
- 		    genotype_bed = genotype_bed,
-	        genotype_bim = genotype_bim,
-	        genotype_fam = genotype_fam,
-
-            chain_file = chain_file
+    		genotype_bed = genotype_bed,
+    	        genotype_bim = genotype_bim,
+    	        genotype_fam = genotype_fam,
+            	chain_file = chain_file
     }
 
     #call subset_plink_and_update_bim{}
@@ -282,10 +288,10 @@ workflow run_preprocess {
 
     output {
 		File mapped_ids = "liftover_plink_bim.mapped_ids"
-        File mapped_bim = "liftover_plink_bim.mapped_bim"
+        	File mapped_bim = "liftover_plink_bim.mapped_bim"
  	}
 
-	parameter_meta {
+     parameter_meta {
 		genofiles_bed: "PLINK genotype filepath"
 		genofiles_bim: "PLINK genotype filepath"
 		genofiles_fam: "PLINK genotype filepath"
