@@ -145,7 +145,7 @@ task liftover_plink_bim {
     File chain_file
 
 
-    command {
+    command<<<
 		
         awk 'start=$4-1 {print "chr"$1"\t"start"\t"$4"\t"$2"\t"$4"\t"$5"\t"$6}' ${genotype_bim} >bim_as_bed.bed
 
@@ -160,7 +160,7 @@ task liftover_plink_bim {
             | awk '{print $1"\tchr"$1":"$3":"$6":"$7"\t"$3"\t"$6"\t"$7}' > \
             bim_as_bed.mapped.bim
 
-   	}    
+    >>>
 
 	runtime {
 		docker: "crukcibioinformatics/crossmap"
