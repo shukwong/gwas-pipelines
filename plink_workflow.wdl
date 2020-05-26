@@ -100,9 +100,9 @@ task plink_bed_subset_sample {
 	}
 
     output {
-	    File plink_bed = ${plink_bed_prefix}.bed
-        File plink_bim = ${plink_bed_prefix}.bim
-        File plink_fam = ${plink_bed_prefix}.fam
+	    File plink_bed = "${plink_bed_prefix}.bed"
+        File plink_bim = "${plink_bed_prefix}.bim"
+        File plink_fam = "${plink_bed_prefix}.fam"
     }
 }
 
@@ -281,8 +281,8 @@ workflow run_preprocess {
  	#call run_ld_prune {}
 
     output {
-		File mapped_ids = liftover_plink_bim.mapped_ids
-        File mapped_bim = liftover_plink_bim.mapped_bim
+		File mapped_ids = "liftover_plink_bim.mapped_ids"
+        File mapped_bim = "liftover_plink_bim.mapped_bim"
  	}
 
 	parameter_meta {
