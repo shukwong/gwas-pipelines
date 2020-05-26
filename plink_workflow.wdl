@@ -142,7 +142,6 @@ task liftover_plink_bim {
 
     File chain_file
 
-    String prefix #=/mnt/data/munge/PLCO_GSA_bedtools
 
     command {
 		
@@ -172,6 +171,35 @@ task liftover_plink_bim {
 	    File mapped_ids = "bim_as_bed.mapped.ids"
         File mapped_bim = "bim_as_bed.mapped.bim"
     }
+}
+
+task vcf_to_bgen {
+
+	File vcf_file
+    String prefix = basename(vcf_file, ".vcf.gz")
+	Int? memory = 10
+	Int? disk = 20
+    Int? bits=8
+
+	command {
+        /plink2 --vcf ${vcf_file} \
+            --make-pgen erase-phase --out plink_out
+
+        /plink2 --pfile plink_out --export bgen-1.2 bits=${bits} --out ${prefix}
+	}
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+	output {
+		File out_bgen = "${prefix}.bgen"
+		File out_bgen_sample = "${prefix}.sample"
+		File out_bgen_log = "${prefix}.log"
+	}
 }
 
 
@@ -225,7 +253,7 @@ task plink_to_vcf {
 	}
 }
 
-workflow run_plink {
+workflow run_preprocess {
 
 	File genotype_bed
 	File genotype_bim
@@ -233,30 +261,32 @@ workflow run_plink {
 	
     String genotype_pruned_plink
 
-	Int? memory = 16
+	Int? memory = 60
 	Int? disk = 100
-	Int? threads = 8
+	Int? threads = 16
  
- 	call run_ld_prune {
- 		input:
- 		    genotype_bed = genotype_bed
-	        genotype_bim = genotype_bim
-	        genotype_fam = genotype_fam
+    call liftover_plink_bim {
+        input:
+ 		    genotype_bed = genotype_bed,
+	        genotype_bim = genotype_bim,
+	        genotype_fam = genotype_fam,
 
-            genotype_pruned_plink = genotype_pruned_plink
- 	}
+            chain_file = chain_file
+    }
 
-        output {
-		File results = cat_results.all_results
- 		Array[File] system_resource_usage = run_interaction.system_resource_usage
- 		Array[File] process_resource_usage = run_interaction.process_resource_usage
+    #call subset_plink_and_update_bim{}
+
+ 	#call run_ld_prune {}
+
+    output {
+		File mapped_ids = liftover_plink_bim.mapped_ids
+        File mapped_bim = liftover_plink_bim.mapped_bim
  	}
 
 	parameter_meta {
-		genofiles_pgen: "Array of PLINK2 genotype (.pgen) filepaths."
-		genofiles_psam: "Array of PLINK2 sample (.psam) filepaths."
-		genofiles_pvar: "Array of PLINK2 variant (.pvar) filepaths."
-		genotype_pruned_pca: "PCA of the pruned Genotype file"
+		genofiles_bed: "PLINK genotype filepath"
+		genofiles_bim: "PLINK genotype filepath"
+		genofiles_fam: "PLINK genotype filepath"
 		cpu: "Minimum number of requested cores."
 		disk: "Requested disk space (in GB)."
 	}
