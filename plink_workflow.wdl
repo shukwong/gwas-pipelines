@@ -15,11 +15,54 @@ task run_ld_prune {
         plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep-pairwise 100 20 0.2 --out check
 	    plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --extract check.prune.in --make-bed --out ${genotype_pruned_plink}
 	    plink --threads ${threads} --bfile ${genotype_pruned_plink} --pca --out ${genotype_pruned_pca}
+
+
+        plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep 50 5 2 --out ld_indep_check
+
+        plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} \
+              --fam ${genotype_fam} --extract ld_indep_check.prune.in \
+              --make-bed --out ld_indep_check.prune
+
+        plink --bfile /mnt/data/munge/ld_indep_check.prune  --indep-pairwise 50 5 0.5 \
+              --make-bed --out ld_indep_pairwise_check
+
+        plink --keep-allele-order --bfile /mnt/data/munge/ld_indep_check.prune \
+              --extract ld_indep_pairwise_check.prune.in \
+              --make-bed --out ${genotype_pruned_plink}
    	}
 
 
 	runtime {
 		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File genotype_pruned_bed = ${genotype_pruned_plink}.bed
+        File genotype_pruned_bed = ${genotype_pruned_plink}.bed
+        File genotype_pruned_bed = ${genotype_pruned_plink}.bed
+    }
+}
+
+task plink_pca {
+    File genotype_bed
+	File genotype_bim
+	File genotype_fam
+
+    String? approx="approx"
+
+    String genotype_pruned_pca
+
+
+    command {
+		/plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --pca ${approx} --out ${genotype_pruned_pca}
+   	}
+
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 		gpu: false
@@ -61,15 +104,61 @@ task plink_bed_subset_sample {
     }
 }
 
-task run_crossmap {
-    File input_file
-	File chain_file
-    String type
-    String prefix = basename(vcf_file, ".${type}")
+task subset_plink_and_update_bim {
+    File genotype_bed
+	File genotype_bim
+	File genotype_fam
+    File mapped_ids
+	File mapped_bim
+    
+    command {
+		
+        plink \
+            --bed ${genotype_bed} --bim ${genotype_bim} \
+            --fam ${genotype_fam} --extract ${mapped_ids} \
+            --make-bed --out genotypes_updated
+
+        cp ${mapped_bim} genotypes_updated.bim   
+   	}    
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File output_bed = genotypes_updated.bed
+        File output_bim = genotypes_updated.bim
+        File output_fam = genotypes_updated.fam
+    }
+}
+
+task liftover_plink_bim {
+   	File genotype_bed
+	File genotype_bim
+	File genotype_fam
+
+    File chain_file
+
+    String prefix #=/mnt/data/munge/PLCO_GSA_bedtools
 
     command {
 		
-       CrossMap.py ${type} ${chain_file} ${input_file} ${prefix}.${type}
+        awk 'start=$4-1 {print "chr"$1"\t"start"\t"$4"\t"$2"\t"$4"\t"$5"\t"$6}' ${genotype_bim} >bim_as_bed.bed
+
+        CrossMap.py bed ${chain_file} bim_as_bed.bed bim_as_bed.crossmap.bed 
+
+        cat bim_as_bed.crossmap.bed  | grep -v ^chrUn | grep -v random \
+            | grep -v alt | grep -v ^chrX | grep -v ^chrY | sort -k1,1 -k2,2g \
+            | cut -f4 >bim_as_bed.mapped.ids
+
+        cat bim_as_bed.crossmap.bed | grep -v ^chrUn | grep -v random | grep -v alt \
+            | grep -v ^chrX | grep -v ^chrY | sort -k1,1 -k2,2g | sed 's/^chr//' \
+            | awk '{print $1"\tchr"$1":"$3":"$6":"$7"\t"$3"\t"$6"\t"$7}' > \
+            bim_as_bed.mapped.bim
+
    	}    
 
 	runtime {
@@ -80,9 +169,11 @@ task run_crossmap {
 	}
 
     output {
-	    File output = ${prefix}.${type}
+	    File mapped_ids = "bim_as_bed.mapped.ids"
+        File mapped_bim = "bim_as_bed.mapped.bim"
     }
 }
+
 
 task vcf_to_plink_bed {
 
