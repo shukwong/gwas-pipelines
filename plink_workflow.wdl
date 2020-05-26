@@ -41,9 +41,13 @@ task run_ld_prune {
 	}
 
     output {
-	    File genotype_pruned_bed = ${genotype_pruned_plink}.bed
-        File genotype_pruned_bed = ${genotype_pruned_plink}.bed
-        File genotype_pruned_bed = ${genotype_pruned_plink}.bed
+	    #File genotype_pruned_bed = ${genotype_pruned_plink}.bed
+        #File genotype_pruned_bed = ${genotype_pruned_plink}.bed
+        #File genotype_pruned_bed = ${genotype_pruned_plink}.bed
+
+        File genotypeprunedbed = ${genotype_pruned_plink}.bed
+        File genotypeprunedbed = ${genotype_pruned_plink}.bed
+        File genotypeprunedbed = ${genotype_pruned_plink}.bed
     }
 }
 
