@@ -1,16 +1,18 @@
-version 1.0
+
 workflow run_preprocess {
     
-    input {
-	    File genotype_bed
-	    File genotype_bim
-	    File genotype_fam
+	File genotype_bed
+	File genotype_bim
+	File genotype_fam
 	
-        File chain_file
+    File chain_file
 
-        File imputed_files_dir
+    File imputed_files_dir
 
-    }
+	Int? memory = 60
+	Int? disk = 500
+	Int? threads = 16
+
 
     call liftover_plink_bim {
         input:
@@ -21,21 +23,177 @@ workflow run_preprocess {
     }
 
 
+    output {
+        File genotype_pruned_bed = run_ld_prune.genotype_pruned_bed
+        File genotype_pruned_bim = run_ld_prune.genotype_pruned_bim
+        File genotype_pruned_fam = run_ld_prune.genotype_pruned_fam
+ 	}
+
+    parameter_meta {
+		genofiles_bed: "PLINK genotype filepath"
+		genofiles_bim: "PLINK genotype filepath"
+		genofiles_fam: "PLINK genotype filepath"
+		cpu: "Minimum number of requested cores."
+		disk: "Requested disk space (in GB)."
+	}
+
+    meta {
+		author: "Wendy Wong"
+		email: "wendy.wong@gmail.com"
+		description: "Preprocess Genotype files for GWAS"
+	}
 
 }
 
+task run_ld_prune {
+    
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
+
+    Int? memory = 32
+    Int? disk = 500
+    
+
+    command {
+		
+        plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep 50 5 2 --out ld_indep_check
+
+        plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} \
+              --fam ${genotype_fam} --extract ld_indep_check.prune.in \
+              --maf 0.01 --make-bed --out ld_indep_check.prune
+
+        plink --bfile /mnt/data/munge/ld_indep_check.prune  --indep-pairwise 50 5 0.5 \
+              --make-bed --out ld_indep_pairwise_check
+
+        plink --keep-allele-order --bfile /mnt/data/munge/ld_indep_check.prune \
+              --extract ld_indep_pairwise_check.prune.in \
+              --make-bed --out genotype_pruned_plink
+    }
+
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File genotype_pruned_bed = "genotype_pruned_plink.bed"
+        File genotype_pruned_bim = "genotype_pruned_plink.bim"
+        File genotype_pruned_fam = "genotype_pruned_plink.fam"
+    }
+}
+
+task plink_pca {
+    
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
+
+    String? approx="approx"
+
+
+    Int? memory = 60
+    Int? disk = 500
+
+    command {
+		/plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --pca ${approx} --out genotype_pruned_pca
+   	}
+
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File genotype_pruned_pca_eigenvec = "genotype_pruned_pca.eigenvec"
+	    File genotype_pruned_pca_eigenval = "genotype_pruned_pca.eigenval"
+        File genotype_pruned_pca_log = "genotype_pruned_pca.log"
+    }
+}
+
+task plink_bed_subset_sample {
+
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
+    File samples_to_keep_file
+
+    String plink_bed_prefix
+
+    Int? memory = 32
+    Int? disk = 500
+	
+    command {
+		
+	    plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${samples_to_keep_file} --make-bed --out ${plink_bed_prefix}
+
+   	}
+
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File plink_bed = "${plink_bed_prefix}.bed"
+        File plink_bim = "${plink_bed_prefix}.bim"
+        File plink_fam = "${plink_bed_prefix}.fam"
+    }
+}
+
+task subset_plink_and_update_bim {
+
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
+    File mapped_ids
+    File mapped_bim
+   
+    Int? memory = 32
+    Int? disk = 500
+    
+ 
+    command {
+		
+        plink \
+            --bed ${genotype_bed} --bim ${genotype_bim} \
+            --fam ${genotype_fam} --extract ${mapped_ids} \
+            --make-bed --out genotypes_updated
+        cp ${mapped_bim} genotypes_updated.bim   
+   	}    
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File output_bed = "genotypes_updated.bed"
+        File output_bim = "genotypes_updated.bim"
+        File output_fam = "genotypes_updated.fam"
+    }
+}
 
 task liftover_plink_bim {
-    input {
-   	    File genotype_bed
-	    File genotype_bim
-	    File genotype_fam
+   	File genotype_bed
+	File genotype_bim
+	File genotype_fam
 
-        File chain_file
+    File chain_file
 
-        Int? memory = 32
-        Int? disk = 500
-    }
+    Int? memory = 32
+    Int? disk = 500
 
     command {
 		
@@ -65,11 +223,85 @@ task liftover_plink_bim {
 	    File mapped_ids = "bim_as_bed.mapped.ids"
         File mapped_bim = "bim_as_bed.mapped.bim"
     }
+}
 
-    meta {
-		author: "Wendy Wong"
-		email: "wendy.wong@gmail.com"
-		description: "Preprocess Genotype files for GWAS"
+task vcf_to_bgen {
+    File vcf_file
+    String prefix = basename(vcf_file, ".vcf.gz")
+    Int? bits=8
+
+    Int? memory = 60
+    Int? disk = 500
+
+	command {
+        /plink2 --vcf ${vcf_file} \
+            --make-pgen erase-phase --out plink_out
+
+        /plink2 --pfile plink_out --export bgen-1.2 bits=${bits} --out ${prefix}
+	}
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+	output {
+		File out_bgen = "${prefix}.bgen"
+		File out_bgen_sample = "${prefix}.sample"
+		File out_bgen_log = "${prefix}.log"
+	}
+}
+
+
+task vcf_to_plink_bed {
+
+	File vcf_file
+    String prefix = basename(vcf_file, ".vcf")
+	Int? memory = 32
+	Int? disk = 500
+
+	command {
+		plink --vcf ${vcf_file}  --make-bed --out ${prefix}
+	}
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+	output {
+		File out_bed = "${prefix}.bed"
+		File out_bim = "${prefix}.bim"
+		File out_fam = "${prefix}.fam"
+	}
+}
+
+task plink_to_vcf {
+
+	File genotype_bed
+	File genotype_bim
+	File genotype_fam
+	String prefix = basename(genotype_bed, ".bed")
+	Int? memory = 32
+	Int? disk = 500
+
+	command {
+        plink --bfile ${prefix} --recode vcf --out ${prefix}.vcf   
+	}
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+	output {
+		File out_vcf = "${prefix}.vcf"
 	}
 }
 
