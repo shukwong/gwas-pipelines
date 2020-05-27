@@ -27,21 +27,21 @@ workflow run_preprocess {
             genotype_bed = genotype_bed,
             genotype_bim = genotype_bim,
             genotype_fam = genotype_fam,
-            mapped_ids = liftover_plink_bim.mapped_ids
+            mapped_ids = liftover_plink_bim.mapped_ids,
             mapped_bim = liftover_plink_bim.mapped_bim
     }
 
  	call run_ld_prune {
         input:
-            genotype_bed = subset_plink_and_update_bim.output_bed
-            genotype_bim = subset_plink_and_update_bim.output_bim
+            genotype_bed = subset_plink_and_update_bim.output_bed,
+            genotype_bim = subset_plink_and_update_bim.output_bim,
             genotype_fam = subset_plink_and_update_bim.output_fam
     }
 
 	call plink_pca {
         input:
-    		genotype_bed = run_ld_prune.genotype_pruned_bed
-    	    genotype_bim = run_ld_prune.genotype_pruned_bim
+    		genotype_bed = run_ld_prune.genotype_pruned_bed,
+    	    genotype_bim = run_ld_prune.genotype_pruned_bim,
     	    genotype_fam = run_ld_prune.genotype_pruned_fam
             
     }
