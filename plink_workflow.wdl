@@ -128,3 +128,28 @@ task plink_to_vcf {
 		File out_vcf = "${prefix}.vcf"
 	}
 }
+
+task vcf_to_plink_bed {
+
+	File vcf_file
+    String prefix = basename(vcf_file, ".vcf")
+	Int? memory = 32
+	Int? disk = 500
+
+	command {
+		plink --vcf ${vcf_file}  --make-bed --out ${prefix}
+	}
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+	output {
+		File out_bed = "${prefix}.bed"
+		File out_bim = "${prefix}.bim"
+		File out_fam = "${prefix}.fam"
+	}
+}
