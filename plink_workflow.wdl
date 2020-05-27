@@ -1,3 +1,4 @@
+version 1.0
 workflow run_preprocess {
     meta {
 		author: "Wendy Wong"
