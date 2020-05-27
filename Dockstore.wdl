@@ -1,9 +1,9 @@
 version 1.0
 task bamstats {
-    input {
+    
         File bam_input
         Int mem_gb
-    }
+    
 
 
 	command {
@@ -25,10 +25,10 @@ task bamstats {
 }
 
 workflow bamstatsWorkflow {
-    input {
+    
         File bam_input
         Int mem_gb
-    }
+    
 	call bamstats { input: bam_input=bam_input, mem_gb=mem_gb }
 }
 

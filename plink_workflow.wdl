@@ -79,7 +79,7 @@ task run_ld_prune {
     Int? memory = 32
     Int? disk = 500
 
-    command<<<
+    command {
 		
         plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep 50 5 2 --out ld_indep_check
 
@@ -93,7 +93,7 @@ task run_ld_prune {
         plink --keep-allele-order --bfile /mnt/data/munge/ld_indep_check.prune \
               --extract ld_indep_pairwise_check.prune.in \
               --make-bed --out genotype_pruned_plink
-   	>>>
+    }
 
 
 	runtime {
