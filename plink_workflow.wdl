@@ -1,11 +1,6 @@
 version 1.0
 workflow run_preprocess {
-    meta {
-		author: "Wendy Wong"
-		email: "wendy.wong@gmail.com"
-		description: "Preprocess Genotype files for GWAS"
-	}
-
+    
     input {
 	    File genotype_bed
 	    File genotype_bim
@@ -44,16 +39,6 @@ workflow run_preprocess {
             genotype_fam = subset_plink_and_update_bim.output_fam
     }
 
-    Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
-    #Array[File] unmapped_bams = glob(imputed_files_dir"/*.dose.vcf.gz")
-
-    scatter (imputed_file in imputed_files) {
-		call vcf_to_bgen {
-			input:
-                vcf_file = imputed_file
-		}
-	}
-
     output {
         File genotype_pruned_bed = run_ld_prune.genotype_pruned_bed
         File genotype_pruned_bim = run_ld_prune.genotype_pruned_bim
@@ -66,6 +51,12 @@ workflow run_preprocess {
 		genofiles_fam: "PLINK genotype filepath"
 		cpu: "Minimum number of requested cores."
 		disk: "Requested disk space (in GB)."
+	}
+
+    meta {
+		author: "Wendy Wong"
+		email: "wendy.wong@gmail.com"
+		description: "Preprocess Genotype files for GWAS"
 	}
 
 }
