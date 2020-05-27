@@ -103,3 +103,28 @@ task run_ld_prune {
         File genotype_pruned_fam = "genotype_pruned_plink.fam"
     }
 }
+
+task plink_to_vcf {
+
+	File genotype_bed
+	File genotype_bim
+	File genotype_fam
+	String prefix = basename(genotype_bed, ".bed")
+	Int? memory = 32
+	Int? disk = 500
+
+	command {
+        plink --bfile ${prefix} --recode vcf --out ${prefix}.vcf   
+	}
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+	output {
+		File out_vcf = "${prefix}.vcf"
+	}
+}
