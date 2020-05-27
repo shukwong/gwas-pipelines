@@ -47,7 +47,7 @@ workflow run_preprocess {
     }
 
 	#Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
-    Array[File] imputed_files = glob("imputed_files_dir/*.dose.vcf.gz")
+    Array[File] imputed_files = glob(imputed_files_dir + "/*.dose.vcf.gz")
 
     scatter (imputed_file in imputed_files) {
 		call vcf_to_bgen {
