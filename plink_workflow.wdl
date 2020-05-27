@@ -10,9 +10,6 @@ workflow run_preprocess {
 
         File imputed_files_dir
 
-	    Int? memory = 60
-	    Int? disk = 500
-	    Int? threads = 16
     }
 
     call liftover_plink_bim {
@@ -23,11 +20,7 @@ workflow run_preprocess {
             chain_file = chain_file
     }
 
-    meta {
-		author: "Wendy Wong"
-		email: "wendy.wong@gmail.com"
-		description: "Preprocess Genotype files for GWAS"
-	}
+
 
 }
 
@@ -72,5 +65,11 @@ task liftover_plink_bim {
 	    File mapped_ids = "bim_as_bed.mapped.ids"
         File mapped_bim = "bim_as_bed.mapped.bim"
     }
+
+    meta {
+		author: "Wendy Wong"
+		email: "wendy.wong@gmail.com"
+		description: "Preprocess Genotype files for GWAS"
+	}
 }
 
