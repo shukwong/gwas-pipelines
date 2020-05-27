@@ -259,3 +259,36 @@ task subset_plink_and_update_bim {
         File output_fam = "genotypes_updated.fam"
     }
 }
+
+task plink_bed_subset_sample {
+
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
+    File samples_to_keep_file
+
+    String plink_bed_prefix
+
+    Int? memory = 32
+    Int? disk = 500
+	
+    command {
+		
+	    plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${samples_to_keep_file} --make-bed --out ${plink_bed_prefix}
+
+    }
+
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File plink_bed = "${plink_bed_prefix}.bed"
+        File plink_bim = "${plink_bed_prefix}.bim"
+        File plink_fam = "${plink_bed_prefix}.fam"
+    }
+}
