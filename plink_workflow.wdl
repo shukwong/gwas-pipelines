@@ -225,12 +225,12 @@ task vcf_to_bgen {
     Int? memory = 60
     Int? disk = 500
 
-	command {
+	command <<<
         /plink2 --vcf ${vcf_file} \
             --make-pgen erase-phase --out plink_out
 
         /plink2 --pfile plink_out --export bgen-1.2 bits=${bits} --out ${prefix}
-	}
+	>>>
 
 	runtime {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
