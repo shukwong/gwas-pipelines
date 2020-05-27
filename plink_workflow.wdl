@@ -29,14 +29,6 @@ workflow run_preprocess {
         File genotype_pruned_fam = run_ld_prune.genotype_pruned_fam
  	}
 
-    parameter_meta {
-		genofiles_bed: "PLINK genotype filepath"
-		genofiles_bim: "PLINK genotype filepath"
-		genofiles_fam: "PLINK genotype filepath"
-		cpu: "Minimum number of requested cores."
-		disk: "Requested disk space (in GB)."
-	}
-
     meta {
 		author: "Wendy Wong"
 		email: "wendy.wong@gmail.com"
