@@ -89,10 +89,9 @@ task plink_pca {
     Int? memory = 60
     Int? disk = 500
 
-    command <<<
+    command {
 		/plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --pca ${approx} --out genotype_pruned_pca
-   	>>>
-
+	}
 
 	runtime {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
