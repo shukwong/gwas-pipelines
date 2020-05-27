@@ -14,7 +14,7 @@ workflow run_preprocess {
 	Int? threads = 16
 
 
-    call task plink_pca {
+    call plink_pca {
  
         input:
     		genotype_bed = genotype_bed,
