@@ -23,12 +23,6 @@ workflow run_preprocess {
     }
 
 
-    output {
-        File genotype_pruned_bed = run_ld_prune.genotype_pruned_bed
-        File genotype_pruned_bim = run_ld_prune.genotype_pruned_bim
-        File genotype_pruned_fam = run_ld_prune.genotype_pruned_fam
- 	}
-
     meta {
 		author : "Wendy Wong"
 		email : "wendy.wong@gmail.com"
