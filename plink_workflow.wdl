@@ -153,3 +153,32 @@ task vcf_to_plink_bed {
 		File out_fam = "${prefix}.fam"
 	}
 }
+
+task vcf_to_bgen {
+    File vcf_file
+    String prefix = basename(vcf_file, ".vcf.gz")
+    Int? bits=8
+
+    Int? memory = 60
+    Int? disk = 500
+
+	command <<<
+        /plink2 --vcf ${vcf_file} \
+            --make-pgen erase-phase --out plink_out
+
+        /plink2 --pfile plink_out --export bgen-1.2 bits=${bits} --out ${prefix}
+	>>>
+
+	runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+	output {
+		File out_bgen = "${prefix}.bgen"
+		File out_bgen_sample = "${prefix}.sample"
+		File out_bgen_log = "${prefix}.log"
+	}
+}
