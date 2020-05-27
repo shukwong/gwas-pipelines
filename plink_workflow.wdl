@@ -46,6 +46,16 @@ workflow run_preprocess {
             
     }
 
+	#Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
+    Array[File] unmapped_bams = glob(imputed_files_dir"/*.dose.vcf.gz")
+
+    scatter (imputed_file in imputed_files) {
+		call vcf_to_bgen {
+			input:
+                vcf_file = imputed_file
+		}
+	}
+
 	output {
         File genotype_pruned_bed = run_ld_prune.genotype_pruned_bed
         File genotype_pruned_bim = run_ld_prune.genotype_pruned_bim
