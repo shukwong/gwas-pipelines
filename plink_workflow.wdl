@@ -222,3 +222,40 @@ task liftover_plink_bim {
         File mapped_bim = "bim_as_bed.mapped.bim"
     }
 }
+
+task subset_plink_and_update_bim {
+
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
+    File mapped_ids
+    File mapped_bim
+   
+    Int? memory = 32
+    Int? disk = 500
+    
+ 
+    command <<<
+
+        plink \
+            --bed ${genotype_bed} --bim ${genotype_bim} \
+            --fam ${genotype_fam} --extract ${mapped_ids} \
+            --make-bed --out genotypes_updated
+            
+        cp ${mapped_bim} genotypes_updated.bim   
+
+    >>>    
+
+	runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File output_bed = "genotypes_updated.bed"
+        File output_bim = "genotypes_updated.bim"
+        File output_fam = "genotypes_updated.fam"
+    }
+}
