@@ -6,17 +6,19 @@ workflow run_preprocess {
 		description: "Preprocess Genotype files for GWAS"
 	}
 
-	File genotype_bed
-	File genotype_bim
-	File genotype_fam
+    input {
+	    File genotype_bed
+	    File genotype_bim
+	    File genotype_fam
 	
-    File chain_file
+        File chain_file
 
-    File imputed_files_dir
+        File imputed_files_dir
 
-	Int? memory = 60
-	Int? disk = 500
-	Int? threads = 16
+	    Int? memory = 60
+	    Int? disk = 500
+	    Int? threads = 16
+    }
 
     call liftover_plink_bim {
         input:
