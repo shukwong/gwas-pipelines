@@ -1,4 +1,4 @@
-#some tasks are modified from https://github.com/large-scale-gxe-methods/genotype-conversion/blob/master/genotype_conversion.wdl
+version 1.0
 
 task run_ld_prune {
   
