@@ -23,36 +23,6 @@ workflow run_preprocess {
             chain_file = chain_file
     }
 
-    call subset_plink_and_update_bim{
-        input:
-            genotype_bed = genotype_bed,
-            genotype_bim = genotype_bim,
-            genotype_fam = genotype_fam,
-            mapped_ids = liftover_plink_bim.mapped_ids
-            mapped_bim = liftover_plink_bim.mapped_bim
-    }
-
- 	call run_ld_prune {
-        input:
-            genotype_bed = subset_plink_and_update_bim.output_bed
-            genotype_bim = subset_plink_and_update_bim.output_bim
-            genotype_fam = subset_plink_and_update_bim.output_fam
-    }
-
-    output {
-        File genotype_pruned_bed = run_ld_prune.genotype_pruned_bed
-        File genotype_pruned_bim = run_ld_prune.genotype_pruned_bim
-        File genotype_pruned_fam = run_ld_prune.genotype_pruned_fam
- 	}
-
-    parameter_meta {
-		genofiles_bed: "PLINK genotype filepath"
-		genofiles_bim: "PLINK genotype filepath"
-		genofiles_fam: "PLINK genotype filepath"
-		cpu: "Minimum number of requested cores."
-		disk: "Requested disk space (in GB)."
-	}
-
     meta {
 		author: "Wendy Wong"
 		email: "wendy.wong@gmail.com"
