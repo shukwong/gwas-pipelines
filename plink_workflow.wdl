@@ -297,8 +297,8 @@ workflow run_preprocess {
             genotype_fam = subset_plink_and_update_bim.output_fam
     }
 
-    #Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
-    Array[File] unmapped_bams = glob(imputed_files_dir"/*.dose.vcf.gz")
+    Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
+    #Array[File] unmapped_bams = glob(imputed_files_dir"/*.dose.vcf.gz")
 
     scatter (imputed_file in imputed_files) {
 		call vcf_to_bgen {
@@ -313,7 +313,7 @@ workflow run_preprocess {
         File genotype_pruned_fam = run_ld_prune.genotype_pruned_fam
  	}
 
-     parameter_meta {
+    parameter_meta {
 		genofiles_bed: "PLINK genotype filepath"
 		genofiles_bim: "PLINK genotype filepath"
 		genofiles_fam: "PLINK genotype filepath"
