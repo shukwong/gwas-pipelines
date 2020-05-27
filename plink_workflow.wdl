@@ -71,13 +71,14 @@ workflow run_preprocess {
 }
 
 task run_ld_prune {
-  
+    input {
     File genotype_bed
     File genotype_bim
     File genotype_fam
 
     Int? memory = 32
     Int? disk = 500
+    }
 
     command {
 		
@@ -112,6 +113,7 @@ task run_ld_prune {
 }
 
 task plink_pca {
+    input {
     File genotype_bed
     File genotype_bim
     File genotype_fam
@@ -121,6 +123,7 @@ task plink_pca {
 
     Int? memory = 60
     Int? disk = 500
+    }
 
     command {
 		/plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --pca ${approx} --out genotype_pruned_pca
@@ -142,7 +145,7 @@ task plink_pca {
 }
 
 task plink_bed_subset_sample {
-  
+    input {
     File genotype_bed
     File genotype_bim
     File genotype_fam
@@ -152,6 +155,7 @@ task plink_bed_subset_sample {
 
     Int? memory = 32
     Int? disk = 500
+    }
 	
     command {
 		
@@ -175,6 +179,7 @@ task plink_bed_subset_sample {
 }
 
 task subset_plink_and_update_bim {
+    input {
     File genotype_bed
     File genotype_bim
     File genotype_fam
@@ -183,6 +188,7 @@ task subset_plink_and_update_bim {
    
     Int? memory = 32
     Int? disk = 500
+    }
  
     command {
 		
@@ -209,6 +215,7 @@ task subset_plink_and_update_bim {
 }
 
 task liftover_plink_bim {
+    input {
    	File genotype_bed
 	File genotype_bim
 	File genotype_fam
@@ -217,8 +224,9 @@ task liftover_plink_bim {
 
     Int? memory = 32
     Int? disk = 500
+    }
 
-    command<<<
+    command {
 		
         awk 'start=$4-1 {print "chr"$1"\t"start"\t"$4"\t"$2"\t"$4"\t"$5"\t"$6}' ${genotype_bim} >bim_as_bed.bed
 
@@ -233,7 +241,7 @@ task liftover_plink_bim {
             | awk '{print $1"\tchr"$1":"$3":"$6":"$7"\t"$3"\t"$6"\t"$7}' > \
             bim_as_bed.mapped.bim
 
-    >>>
+    }
 
 	runtime {
 		docker: "crukcibioinformatics/crossmap"
@@ -249,13 +257,14 @@ task liftover_plink_bim {
 }
 
 task vcf_to_bgen {
-
+    input {
     File vcf_file
     String prefix = basename(vcf_file, ".vcf.gz")
     Int? bits=8
 
     Int? memory = 60
     Int? disk = 500
+    }
 
 	command {
         /plink2 --vcf ${vcf_file} \
@@ -280,11 +289,12 @@ task vcf_to_bgen {
 
 
 task vcf_to_plink_bed {
-
+    input {
 	File vcf_file
     String prefix = basename(vcf_file, ".vcf")
 	Int? memory = 32
 	Int? disk = 500
+    }
 
 	command {
 		plink --vcf ${vcf_file}  --make-bed --out ${prefix}
@@ -305,13 +315,14 @@ task vcf_to_plink_bed {
 }
 
 task plink_to_vcf {
-
+    input {
 	File genotype_bed
 	File genotype_bim
 	File genotype_fam
 	String prefix = basename(genotype_bed, ".bed")
 	Int? memory = 32
 	Int? disk = 500
+    }
 
 	command {
         plink --bfile ${prefix} --recode vcf --out ${prefix}.vcf   
