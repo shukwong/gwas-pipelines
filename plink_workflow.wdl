@@ -14,16 +14,44 @@ workflow run_preprocess {
 	Int? threads = 16
 
 
-    call plink_pca {
- 
+	call liftover_plink_bim {
         input:
     		genotype_bed = genotype_bed,
     	    genotype_bim = genotype_bim,
-    	    genotype_fam = genotype_fam
+    	    genotype_fam = genotype_fam,
+            chain_file = chain_file
+    }
+
+    call subset_plink_and_update_bim {
+        input:
+            genotype_bed = genotype_bed,
+            genotype_bim = genotype_bim,
+            genotype_fam = genotype_fam,
+            mapped_ids = liftover_plink_bim.mapped_ids
+            mapped_bim = liftover_plink_bim.mapped_bim
+    }
+
+ 	call run_ld_prune {
+        input:
+            genotype_bed = subset_plink_and_update_bim.output_bed
+            genotype_bim = subset_plink_and_update_bim.output_bim
+            genotype_fam = subset_plink_and_update_bim.output_fam
+    }
+
+	call plink_pca {
+        input:
+    		genotype_bed = run_ld_prune.genotype_pruned_bed
+    	    genotype_bim = run_ld_prune.genotype_pruned_bim
+    	    genotype_fam = run_ld_prune.genotype_pruned_fam
             
     }
 
-
+	output {
+        File genotype_pruned_bed = run_ld_prune.genotype_pruned_bed
+        File genotype_pruned_bim = run_ld_prune.genotype_pruned_bim
+        File genotype_pruned_fam = run_ld_prune.genotype_pruned_fam
+		File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
+ 	}
     
 
     meta {
