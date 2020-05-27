@@ -6,9 +6,6 @@ task run_ld_prune {
     File genotype_bim
     File genotype_fam
 
-    String genotype_pruned_plink
-
-
     Int? memory = 32
     Int? disk = 500
 
@@ -18,14 +15,14 @@ task run_ld_prune {
 
         plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} \
               --fam ${genotype_fam} --extract ld_indep_check.prune.in \
-              --make-bed --out ld_indep_check.prune
+              --maf 0.01 --make-bed --out ld_indep_check.prune
 
         plink --bfile /mnt/data/munge/ld_indep_check.prune  --indep-pairwise 50 5 0.5 \
               --make-bed --out ld_indep_pairwise_check
 
         plink --keep-allele-order --bfile /mnt/data/munge/ld_indep_check.prune \
               --extract ld_indep_pairwise_check.prune.in \
-              --make-bed --out ${genotype_pruned_plink}
+              --make-bed --out genotype_pruned_plink
    	>>>
 
 
@@ -37,9 +34,9 @@ task run_ld_prune {
 	}
 
     output {
-	File genotype_pruned_bed = "${genotype_pruned_plink}.bed"
-        File genotype_pruned_bim = "${genotype_pruned_plink}.bim"
-        File genotype_pruned_fam = "${genotype_pruned_plink}.fam"
+	    File genotype_pruned_bed = "genotype_pruned_plink.bed"
+        File genotype_pruned_bim = "genotype_pruned_plink.bim"
+        File genotype_pruned_fam = "genotype_pruned_plink.fam"
 
     }
 }
@@ -135,7 +132,7 @@ task subset_plink_and_update_bim {
 	}
 
     output {
-	File output_bed = "genotypes_updated.bed"
+	    File output_bed = "genotypes_updated.bed"
         File output_bim = "genotypes_updated.bim"
         File output_fam = "genotypes_updated.fam"
     }
@@ -268,7 +265,9 @@ workflow run_preprocess {
 	File genotype_bim
 	File genotype_fam
 	
-    	File chain_file
+    File chain_file
+
+    File imputed_files_dir
 
 	Int? memory = 60
 	Int? disk = 500
@@ -277,18 +276,41 @@ workflow run_preprocess {
     call liftover_plink_bim {
         input:
     		genotype_bed = genotype_bed,
-    	        genotype_bim = genotype_bim,
-    	        genotype_fam = genotype_fam,
-            	chain_file = chain_file
+    	    genotype_bim = genotype_bim,
+    	    genotype_fam = genotype_fam,
+            chain_file = chain_file
     }
 
-    #call subset_plink_and_update_bim{}
+    call subset_plink_and_update_bim{
+        input:
+            genotype_bed = genotype_bed,
+            genotype_bim = genotype_bim,
+            genotype_fam = genotype_fam,
+            mapped_ids = liftover_plink_bim.mapped_ids
+            mapped_bim = liftover_plink_bim.mapped_bim
+    }
 
- 	#call run_ld_prune {}
+ 	call run_ld_prune {
+        input:
+            genotype_bed = subset_plink_and_update_bim.output_bed
+            genotype_bim = subset_plink_and_update_bim.output_bim
+            genotype_fam = subset_plink_and_update_bim.output_fam
+    }
+
+    #Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
+    Array[File] unmapped_bams = glob(imputed_files_dir"/*.dose.vcf.gz")
+
+    scatter (imputed_file in imputed_files) {
+		call vcf_to_bgen {
+			input:
+                vcf_file = imputed_file
+		}
+	}
 
     output {
-		File mapped_ids = "liftover_plink_bim.mapped_ids"
-        	File mapped_bim = "liftover_plink_bim.mapped_bim"
+        File genotype_pruned_bed = run_ld_prune.genotype_pruned_bed
+        File genotype_pruned_bim = run_ld_prune.genotype_pruned_bim
+        File genotype_pruned_fam = run_ld_prune.genotype_pruned_fam
  	}
 
      parameter_meta {

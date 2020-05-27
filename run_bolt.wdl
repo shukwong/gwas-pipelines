@@ -35,7 +35,7 @@ task run_bolt {
             --qCovarCol=PC{1:10} \
             --statsFile=${genotype_stats_filename}.gz \
             --bgenFile=${imputed_bgen_file} \
-            --bgenMinMAF=1e-3 \
+            --bgenMinMAF=0.01 \
             --bgenMinINFO=0.3 \
             --sampleFile=${imputed_sample_file} \
             --statsFileBgenSnps=${imputed_stats_filename}.gz \

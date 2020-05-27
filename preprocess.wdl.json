@@ -1,0 +1,7 @@
+{
+ "run_preprocess.genotype_bed": "File",
+ "run_preprocess.genotype_bim": "File",
+ "run_preprocess.genotype_fam": "File",
+ "run_preprocess.chain_file": "File",
+ "run_preprocess.imputed_files_dir": "File" 
+}
