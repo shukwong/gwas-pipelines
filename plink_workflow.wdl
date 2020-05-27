@@ -90,9 +90,9 @@ task plink_pca {
     Int? memory = 60
     Int? disk = 500
 
-    command {
+    command <<<
 		/plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --pca ${approx} --out genotype_pruned_pca
-   	}
+   	>>>
 
 
 	runtime {
@@ -121,11 +121,11 @@ task plink_bed_subset_sample {
     Int? memory = 32
     Int? disk = 500
 	
-    command {
+    command <<<
 		
 	    plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${samples_to_keep_file} --make-bed --out ${plink_bed_prefix}
 
-   	}
+   	>>>
 
 
 	runtime {
@@ -155,12 +155,13 @@ task subset_plink_and_update_bim {
     
  
     command <<<
-		
+
         plink \
             --bed ${genotype_bed} --bim ${genotype_bim} \
             --fam ${genotype_fam} --extract ${mapped_ids} \
             --make-bed --out genotypes_updated
         cp ${mapped_bim} genotypes_updated.bim   
+
     >>>    
 
 	runtime {
@@ -254,9 +255,9 @@ task vcf_to_plink_bed {
 	Int? memory = 32
 	Int? disk = 500
 
-	command {
+	command <<<
 		plink --vcf ${vcf_file}  --make-bed --out ${prefix}
-	}
+	>>>
 
 	runtime {
 		docker: "quay.io/h3abionet_org/py3plink"
@@ -281,9 +282,9 @@ task plink_to_vcf {
 	Int? memory = 32
 	Int? disk = 500
 
-	command {
+	command <<<
         plink --bfile ${prefix} --recode vcf --out ${prefix}.vcf   
-	}
+	>>>
 
 	runtime {
 		docker: "quay.io/h3abionet_org/py3plink"
