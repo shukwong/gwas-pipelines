@@ -101,6 +101,31 @@ task plink_pca {
     }
 }
 
+task run_genotype_qc_filter {
+	
+    File
+
+    command <<<
+
+	plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} \
+              --maf 0.05 --geno 0.9 --make-bed
+
+
+    >>>
+
+    runtime {
+	docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+                memory: "${memory} GB"
+                disks: "local-disk ${disk} HDD"
+                gpu: false
+	}
+	
+     output {
+	File gentoype_qc_filtered_bed = "gentoype_qc_filtered.bed"	
+     }	
+}
+
+
 task run_ld_prune {
     
     File genotype_bed
@@ -112,12 +137,12 @@ task run_ld_prune {
     
 
     command <<<
-		
+	
         plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam}  --indep 50 5 2 --out ld_indep_check
 
         plink --keep-allele-order --bed ${genotype_bed} --bim ${genotype_bim} \
               --fam ${genotype_fam} --extract ld_indep_check.prune.in \
-              --maf 0.01 --make-bed --out ld_indep_check.prune
+              --make-bed --out ld_indep_check.prune
 
         plink --bfile /mnt/data/munge/ld_indep_check.prune  --indep-pairwise 50 5 0.5 \
               --make-bed --out ld_indep_pairwise_check
@@ -201,7 +226,7 @@ task vcf_to_bgen {
     Int? disk = 500
 
 	command <<<
-        /plink2 --vcf ${vcf_file} \
+        /plink2 --vcf ${vcf_file} dosage=DS \
             --make-pgen erase-phase --out plink_out
 
         /plink2 --pfile plink_out --export bgen-1.2 bits=${bits} --out ${prefix}
