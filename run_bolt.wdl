@@ -3,7 +3,6 @@ task run_bolt {
 	File genotype_bed
 	File genotype_bim
 	File genotype_fam
-	File samples_to_remove_file
     File pheno_file
     File ld_scores_file
     File genetic_map_file
@@ -15,8 +14,9 @@ task run_bolt {
     String genotype_stats_filename = bolt_genotype_stats_${pheno_col}.gz
     String imputed_stats_filename = bolt_imputed_stats_${pheno_col}.gz
 
-    Array[File] imputed_bgen_file
-
+    Array[File] imputed_bgen_files = read_tsv(imputed_bgen_filelist)
+    Array[String] bgen_files_with_input_option = prefix("--input ", imputed_bgen_files[0]) 
+    
 	Int? memory = 32
 	Int? disk = 500
     Int? threads = 32
@@ -35,7 +35,7 @@ task run_bolt {
             --covarFile=${covar_file} \
             --qCovarCol=PC{1:10} \
             --statsFile=${genotype_stats_filename} \
-            ${prefix="--input" sep=' ' imputed_bgen_files} \
+            ${sep=" " bgen_files_with_input_option} \
             --bgenFile=${imputed_bgen_file} \
             --bgenMinMAF=0.01 \
             --bgenMinINFO=0.3 \
