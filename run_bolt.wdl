@@ -7,17 +7,19 @@ task run_bolt {
     File pheno_file
     File ld_scores_file
     File genetic_map_file
-    File imputed_bgen_file
     File imputed_sample_file
     File covar_file
+    File imputed_bgen_filelist
 
     String pheno_col
     String genotype_stats_filename = bolt_genotype_stats_${pheno_col}.gz
     String imputed_stats_filename = bolt_imputed_stats_${pheno_col}.gz
 
-	Int? memory = 360
+    Array[File] imputed_bgen_file
+
+	Int? memory = 32
 	Int? disk = 500
-    Int? threads = 64
+    Int? threads = 32
 
 	command {
         bolt \
@@ -33,6 +35,7 @@ task run_bolt {
             --covarFile=${covar_file} \
             --qCovarCol=PC{1:10} \
             --statsFile=${genotype_stats_filename} \
+            ${prefix="--input" sep=' ' imputed_bgen_files} \
             --bgenFile=${imputed_bgen_file} \
             --bgenMinMAF=0.01 \
             --bgenMinINFO=0.3 \
@@ -43,7 +46,7 @@ task run_bolt {
 	}
 
 	runtime {
-		docker: "quay.io/h3abionet_org/py3plink"
+		docker: "quay.io/shukwong/bolt-lmm:2.3.4"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: ${threads}

@@ -1,3 +1,34 @@
+
+workflow run_saige {
+    
+    File imputed_bgen_files
+    File imputed_sample_file
+    File covar_file
+
+    File gmmat_model_file
+    File variance_ratio_file
+
+    String chrom 
+
+   Array[File] imputed_bgen_files = read_tsv(imputed_bgen_files)
+
+    scatter (imputed_bgen_file in imputed_bgen_files) {
+		call saige_step2_imputed_bgen {
+			input:
+                vcf_file = imputed_file
+		}
+	}
+    
+
+    meta {
+		author : "Wendy Wong"
+		email : "wendy.wong@gmail.com"
+		description : "Run SAIGE"
+	}
+
+}
+
+
 task saige_step1 {
 
 	File genotype_bed
@@ -21,12 +52,6 @@ task saige_step1 {
 	Int? disk = 500
     Int? threads = 64
 
-    genotype_bed=/mnt/data/PLCO_GSA_ld_pruned.bed
-    genotype_bim=/mnt/data/PLCO_GSA_ld_pruned.bim
-    genotype_fam=/mnt/data/PLCO_GSA_ld_pruned.fam
-    genotype_plink_prefix=/mnt/data/PLCO_GSA_ld_pruned
-    covar_file=/mnt/data/Phenotype/gsa_qx_v5.with_na.augmented.18may2020.pheno
-
 	command {
         step1_fitNULLGLMM.R     \
             --plinkFile=${genotype_plink_prefix} \
@@ -43,12 +68,63 @@ task saige_step1 {
 		docker: "wzhou88/saige:0.38"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
-        cpu: 64
+        cpu: "${threads}"
 		gpu: false
 	}
 
 	output {
 		File genotype_stats_file = ${genotype_stats_filename}.gz
         File imputed_stats_file = ${imputed_stats_filename}.gz
+	}
+}
+
+
+task saige_step2_imputed_bgen {
+
+    File imputed_bgen_file
+    File imputed_bgen_file_index
+    File imputed_sample_file
+    File covar_file
+
+    File gmmat_model_file
+    File variance_ratio_file
+
+    String chrom 
+
+    String file_prefix = basename(imputed_bgen_file, ".bgen") 
+    String saige_output_file = file_prefix + "." + chrom + ".txt"
+
+	Int? memory = 64
+	Int? disk = 500
+    Int? threads = 64
+
+	command {
+      step2_SPAtests.R \
+        --bgenFile=${imputed_bgen_file} \
+        --bgenFileIndex=${imputed_bgen_file_index} \
+        --IsDropMissingDosages=FALSE \
+        --minMAF=0.01 \
+        --minMAC=3 \
+        --chrom=${chrom} \
+        --sampleFile=${imputed_sample_file} \
+        --GMMATmodelFile=${gmmat_model_file} \
+        --varianceRatioFile=${variance_ratio_file} \
+        --SAIGEOutputFile=${saige_output_file} \
+        --numLinesOutput=2 \
+        --IsOutputNinCaseCtrl=TRUE \
+        --IsOutputHetHomCountsinCaseCtrl=TRUE \
+         --IsOutputAFinCaseCtrl=TRUE
+	}
+
+	runtime {
+		docker: "wzhou88/saige:0.38"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: 64
+		gpu: false
+	}
+
+	output {
+		File saige_output_file = "${saige_output_file}.gz"
 	}
 }
