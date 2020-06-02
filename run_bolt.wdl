@@ -12,10 +12,10 @@ task run_bolt {
     File covar_file
 
     String pheno_col
-    String genotype_stats_filename
-    String imputed_stats_filename
+    String genotype_stats_filename = bolt_genotype_stats_${pheno_col}.gz
+    String imputed_stats_filename = bolt_imputed_stats_${pheno_col}.gz
 
-	Int? memory = 32
+	Int? memory = 360
 	Int? disk = 500
     Int? threads = 64
 
@@ -24,7 +24,6 @@ task run_bolt {
             --bed=${genotype_bed} \
             --bim=${genotype_bim} \
             --fam=${genotype_fam} \
-            --remove=${samples_to_remove_file} \
             --phenoFile=${pheno_file} \
             --phenoCol=${pheno_col} \
             --LDscoresFile=${ld_scores_file} \
@@ -33,12 +32,13 @@ task run_bolt {
             --numThreads=${threads} \
             --covarFile=${covar_file} \
             --qCovarCol=PC{1:10} \
-            --statsFile=${genotype_stats_filename}.gz \
+            --statsFile=${genotype_stats_filename} \
             --bgenFile=${imputed_bgen_file} \
             --bgenMinMAF=0.01 \
             --bgenMinINFO=0.3 \
             --sampleFile=${imputed_sample_file} \
-            --statsFileBgenSnps=${imputed_stats_filename}.gz \
+            --statsFileBgenSnps=${imputed_stats_filename} \
+            --noBgenIDcheck \
             --verboseStats
 	}
 
@@ -46,12 +46,12 @@ task run_bolt {
 		docker: "quay.io/h3abionet_org/py3plink"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
-        cpu: 64
+        cpu: ${threads}
 		gpu: false
 	}
 
 	output {
-		File genotype_stats_file = ${genotype_stats_filename}.gz
-        File imputed_stats_file = ${imputed_stats_filename}.gz
+		File genotype_stats_file = "${genotype_stats_filename}"
+        File imputed_stats_file = "${imputed_stats_filename}"
 	}
 }
