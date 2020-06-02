@@ -1,0 +1,14 @@
+
+{	
+    "run_bolt.genotype_bed": "File",
+	"run_bolt.genotype_bim": "File",
+	"run_bolt.genotype_fam": "File",
+	"run_bolt.samples_to_remove_file": "File",
+    "run_bolt.pheno_file": "File",
+    "run_bolt.ld_scores_file": "File",
+    "run_bolt.genetic_map_file": "File",
+    "run_bolt.imputed_bgen_file": "File",
+    "run_bolt.imputed_sample_file": "File",
+    "run_bolt.covar_file": "File",
+    "run_bolt.pheno_col": "String"
+}   
