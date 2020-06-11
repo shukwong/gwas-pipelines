@@ -1,7 +1,7 @@
 
 workflow run_saige {
     
-    File imputed_bgen_files
+    File imputed_bgen_list_file
     File imputed_sample_file
     File covar_file
 
@@ -10,7 +10,7 @@ workflow run_saige {
 
     String chrom 
 
-   Array[File] imputed_bgen_files = read_tsv(imputed_bgen_files)
+   Array[File] imputed_bgen_files = read_tsv(imputed_bgen_list_file)
 
     scatter (imputed_bgen_file in imputed_bgen_files) {
 		call saige_step2_imputed_bgen {

@@ -14,6 +14,15 @@ workflow run_preprocess {
 	Int? threads = 16
 
 
+    call plink_bed_subset_sample {
+        input:
+             genotype_bed
+             genotype_bim
+             genotype_fam
+             samples_to_keep_file
+             plink_bed_prefix
+    }
+
 	call liftover_plink_bim {
         input:
     		genotype_bed = genotype_bed,
@@ -21,7 +30,7 @@ workflow run_preprocess {
     	    genotype_fam = genotype_fam,
             chain_file = chain_file
     }
-
+#TODO: merge this liftover and subset variants
     call subset_plink_and_update_bim {
         input:
             genotype_bed = genotype_bed,
@@ -30,6 +39,7 @@ workflow run_preprocess {
             mapped_ids = liftover_plink_bim.mapped_ids,
             mapped_bim = liftover_plink_bim.mapped_bim
     }
+
 
  	call run_ld_prune {
         input:
