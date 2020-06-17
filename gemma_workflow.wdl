@@ -1,38 +1,43 @@
 task run_gemma_relatedness_matrix {
-    input:
+
         File genotype_bed
         File genotype_bim
         File genotype_fam
 
 
-        String genotype_prefix 
+        String genotype_prefix = basename(genotype_bed, ".bed")
     
 	    Int? memory = 32
 	    Int? disk = 200
         Int? threads = 32
 
+
 	command {
         gemma \
-        -bfile ${genotype_prefix} -gk 2 -o ${gemma_relatedness_matrix}
+        -bfile ${genotype_prefix} -gk 2 -o  ${genotype_prefix}"_relatedness_matrix.gemma.txt.sXX.txt"
 	}
 
 	runtime {
 		docker: "quay.io/shukwong/gemma:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
-        cpu: ${threads}
+        cpu: "${threads}"
 		gpu: false
 	}
 
 	output {
-		File gemma_relatedness_matrix="relatedness_matrix.gemma.txt.sXX.txt"
+		File gemma_relatedness_matrix_file="${genotype_prefix}_relatedness_matrix.gemma.txt.sXX.txt"
 	}
 }
 
 task run_gemma_lmm {
-    input:
-        File gemma_out=gemma.imputed.out.txt
-        File imputed_prefix=/mnt/data/gemma/chr21-filtered.matched 
+
+        File imputed_bed
+        File imputed_bim
+        File imputed_fam
+        File gemma_relatedness_matrix_file
+
+        String imputed_prefix = basename (imputed_bed, ".bed")
 
         Int? memory = 16
 	    Int? disk = 200
@@ -41,7 +46,7 @@ task run_gemma_lmm {
     command {
         gemma \
            -bfile ${imputed_prefix} \
-           -k relatedness_matrix.sXX.txt \
+           -k ${gemma_relatedness_matrix_file} \
            -lmm 4 \
            -o gemma_lmm4
     }
@@ -50,7 +55,7 @@ task run_gemma_lmm {
 		docker: "quay.io/shukwong/gemma:latest"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
-        cpu: ${threads}
+        cpu: "${threads}"
 		gpu: false
 	}
 
