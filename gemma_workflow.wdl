@@ -1,3 +1,31 @@
+workflow run_gemma {
+       File genotype_bed
+       File genotype_bim
+       File genotype_fam
+
+       File plink_bed
+       File plink_bim
+       File plink_fam
+
+
+    call run_gemma_relatedness_matrix {
+        input:
+            genotype_bed = genotype_bed,
+            genotype_bim = genotype_bim,
+            genotype_fam = genotype_fam
+    }
+
+    call run_gemma_lmm {
+        input: 
+            plink_bed = plink_bed,
+            plink_bim = plink_bim,
+            plink_fam = plink_fam,
+            gemma_relatedness_matrix_file = run_gemma_relatedness_matrix.gemma_relatedness_matrix_file
+    }
+
+}
+
+
 task run_gemma_relatedness_matrix {
 
         File genotype_bed
@@ -32,12 +60,12 @@ task run_gemma_relatedness_matrix {
 
 task run_gemma_lmm {
 
-        File imputed_bed
-        File imputed_bim
-        File imputed_fam
+        File plink_bed
+        File plink_bim
+        File plink_fam
         File gemma_relatedness_matrix_file
 
-        String imputed_prefix = basename (imputed_bed, ".bed")
+        String plink_prefix = basename (plink_bed, ".bed")
 
         Int? memory = 16
 	    Int? disk = 200
@@ -45,10 +73,10 @@ task run_gemma_lmm {
 
     command {
         gemma \
-           -bfile ${imputed_prefix} \
+           -bfile ${plink_prefix} \
            -k ${gemma_relatedness_matrix_file} \
            -lmm 4 \
-           -o gemma_lmm4
+           -o ${plink_prefix}_gemma_lmm4
     }
 
     runtime {
@@ -60,7 +88,7 @@ task run_gemma_lmm {
 	}
 
 	output {
-		File gemma_association_file="gemma_lmm4.assoc.txt"
-        File gemma_log_file="gemma_lmm4.log.txt"
+		File gemma_association_file="${plink_prefix}_gemma_lmm4.assoc.txt"
+        File gemma_log_file="${plink_prefix}_gemma_lmm4.log.txt"
 	}
 }
