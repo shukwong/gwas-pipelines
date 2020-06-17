@@ -25,9 +25,9 @@ workflow run_preprocess {
 
 	call liftover_plink_bim {
         input:
-    		genotype_bed = genotype_bed,
-    	    genotype_bim = genotype_bim,
-    	    genotype_fam = genotype_fam,
+    		genotype_bed = plink_bed_subset_sample.plink_bed,
+    	    genotype_bim = plink_bed_subset_sample.plink_bim,
+    	    genotype_fam = plink_bed_subset_sample.plink_fam,
             chain_file = chain_file
     }
 #TODO: merge this liftover and subset variants
