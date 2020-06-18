@@ -42,7 +42,7 @@ task run_gemma_relatedness_matrix {
 
 	command {
         gemma \
-        -bfile ${genotype_prefix} -gk 2 -o  ${genotype_prefix}"_relatedness_matrix.gemma.txt.sXX.txt"
+        -bfile ${sub(genotype_bed,'.bed','')} -gk 2 -outdir ./ -o ${genotype_prefix}_relatedness_matrix
 	}
 
 	runtime {
@@ -54,7 +54,7 @@ task run_gemma_relatedness_matrix {
 	}
 
 	output {
-		File gemma_relatedness_matrix_file="${genotype_prefix}_relatedness_matrix.gemma.txt.sXX.txt"
+		File gemma_relatedness_matrix_file="./${genotype_prefix}_relatedness_matrix.sXX.txt"
 	}
 }
 
@@ -73,9 +73,10 @@ task run_gemma_lmm {
 
     command {
         gemma \
-           -bfile ${plink_prefix} \
+           -bfile ${sub(plink_bed,".bed",'')} \
            -k ${gemma_relatedness_matrix_file} \
            -lmm 4 \
+           -outdir ./ \
            -o ${plink_prefix}_gemma_lmm4
     }
 
