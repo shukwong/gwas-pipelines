@@ -1,21 +1,42 @@
 
 workflow run_saige {
     
-    File imputed_bgen_list_file
-    File imputed_sample_file
+    File genotype_bed
+	File genotype_bim
+	File genotype_fam
+
+    File bgen_list_file
+    File bgen_sample_file
+    File pheno_file
     File covar_file
 
-    File gmmat_model_file
-    File variance_ratio_file
+    String phenoCol
+    String covarColList #covar list, separated by comma
 
-    String chrom 
+    Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
 
-   Array[File] imputed_bgen_files = read_tsv(imputed_bgen_list_file)
+    call saige_step1_fitNULL  {
+        input:
+            genotype_bed = genotype_bed,
+	        genotype_bim = genotype_bim,
+	        genotype_fam = genotype_fam,
+	        pheno_file = pheno_file,
+            phenoCol = phenoCol,
+            covarColList = covarColList
+    }
 
-    scatter (imputed_bgen_file in imputed_bgen_files) {
-		call saige_step2_imputed_bgen {
+    scatter (bgen_file_line in bgen_file_list) {
+		call saige_step2_SPAtests {
 			input:
-                vcf_file = imputed_file
+                bgen_file = bgen_file_line[0],
+                bgen_file_index = bgen_file_line[1],
+                bgen_sample_file = bgen_sample_file,
+                covar_file = covar_file,
+                chrom = bgen_file_line[2],
+                gmmat_model_file = saige_step1_fitNULL.gmmat_model_file,
+                variance_ratio_file = saige_step1_fitNULL.variance_ratio_file
+
+
 		}
 	}
     
@@ -29,38 +50,32 @@ workflow run_saige {
 }
 
 
-task saige_step1 {
+task saige_step1_fitNULL {
 
 	File genotype_bed
 	File genotype_bim
 	File genotype_fam
-	File samples_to_remove_file
-    File pheno_file
-    File ld_scores_file
-    File genetic_map_file
-    File imputed_bgen_file
-    File imputed_sample_file
-    File covar_file
-    File output_dir
+    File pheno_file #pheno_file needs to include covars
 
-    String pheno_col
+    String phenoCol
     String covarColList #covar list, separated by comma
-    
-    String genotype_plink_prefix 
+    Float relatedness_cutoff
 
-	Int? memory = 360
-	Int? disk = 500
-    Int? threads = 64
+	Int? memory = 64
+	Int? disk = 200
+    Int? threads = 32
 
 	command {
         step1_fitNULLGLMM.R     \
-            --plinkFile=${genotype_plink_prefix} \
-            --phenoFile=${covar_file} \
-            --phenoCol=j_pros_cancer \
+            --plinkFile=${sub(genotype_bed,'\\.bed$','')} \
+            --phenoFile=${pheno_file} \
+            --phenoCol=${phenoCol} \
             --covarColList=${covarColList} \
             --sampleIDColinphenoFile=IID \
             --traitType=binary        \
-            --outputPrefix=${output_dir}/saige_step1_${phenoCol} \
+            --IsSparseKin=TRUE \
+            --relatednessCutoff=${relatedness_cutoff} \
+            --outputPrefix=saige_step1_${phenoCol} \
             --nThreads=${threads}
 	}
 
@@ -73,26 +88,28 @@ task saige_step1 {
 	}
 
 	output {
-		File genotype_stats_file = ${genotype_stats_filename}.gz
-        File imputed_stats_file = ${imputed_stats_filename}.gz
+		File gmmat_model_file = "saige_step1_${phenoCol}.rda"
+        File variance_ratio_file = "saige_step1_${phenoCol}.varianceRatio.txt"
+        File sparse_sigma_file = "saige_step1_${phenoCol}.sparse_sigma_file.txt"
 	}
 }
 
 
-task saige_step2_imputed_bgen {
+task saige_step2_SPAtests {
 
-    File imputed_bgen_file
-    File imputed_bgen_file_index
-    File imputed_sample_file
+    File bgen_file
+    File bgen_file_index
+    File bgen_sample_file
     File covar_file
 
     File gmmat_model_file
     File variance_ratio_file
+    File sparse_sigma_file
 
     String chrom 
 
-    String file_prefix = basename(imputed_bgen_file, ".bgen") 
-    String saige_output_file = file_prefix + "." + chrom + ".txt"
+    String file_prefix = basename(bgen_file, ".bgen") 
+    String saige_output_file_name = file_prefix + "." + chrom + ".txt"
 
 	Int? memory = 64
 	Int? disk = 500
@@ -100,20 +117,21 @@ task saige_step2_imputed_bgen {
 
 	command {
       step2_SPAtests.R \
-        --bgenFile=${imputed_bgen_file} \
-        --bgenFileIndex=${imputed_bgen_file_index} \
+        --bgenFile=${bgen_file} \
+        --bgenFileIndex=${bgen_file_index} \
         --IsDropMissingDosages=FALSE \
         --minMAF=0.01 \
-        --minMAC=3 \
+        --minMAC=1 \
         --chrom=${chrom} \
-        --sampleFile=${imputed_sample_file} \
+        --sampleFile=${bgen_sample_file} \
         --GMMATmodelFile=${gmmat_model_file} \
         --varianceRatioFile=${variance_ratio_file} \
-        --SAIGEOutputFile=${saige_output_file} \
+        --sparseSigmaFile=${sparse_sigma_file} \
+        --SAIGEOutputFile=${saige_output_file_name} \
         --numLinesOutput=2 \
         --IsOutputNinCaseCtrl=TRUE \
         --IsOutputHetHomCountsinCaseCtrl=TRUE \
-         --IsOutputAFinCaseCtrl=TRUE
+        --IsOutputAFinCaseCtrl=TRUE
 	}
 
 	runtime {
@@ -125,6 +143,6 @@ task saige_step2_imputed_bgen {
 	}
 
 	output {
-		File saige_output_file = "${saige_output_file}.gz"
+		File saige_output_file = "${saige_output_file_name}.gz"
 	}
 }
