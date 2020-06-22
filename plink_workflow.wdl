@@ -71,6 +71,10 @@ workflow run_preprocess {
 			input:
                 vcf_file = imputed_file
 		}
+        call index_bgen_file {
+            input:
+                bgen_file = vcf_to_bgen.bgen_file
+        }
 	}
 
 	output {
@@ -272,6 +276,18 @@ task vcf_to_bgen {
 		File out_bgen_sample = "${prefix}.sample"
 		File out_bgen_log = "${prefix}.log"
 	}
+}
+
+task index_bgen_file {
+    File bgen_file
+
+    command {
+        bgenix -g ${bgen_file} -index -clobber
+    }
+
+    output {
+        File bgen_file_index = "${bgen_file}.bgi"
+    }
 }
 
 task liftover_plink_bim {
