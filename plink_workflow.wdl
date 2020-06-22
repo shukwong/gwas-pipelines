@@ -6,7 +6,7 @@ workflow run_preprocess {
 	File genotype_fam
 
     File samples_to_keep_file
-    File imputed_samples_file
+    File imputed_list_of_vcfs_file
     
     File chain_file
 
@@ -49,13 +49,14 @@ workflow run_preprocess {
             chain_file = chain_file
     }
 
-	Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
+	Array[Array[File]] imputed_files = read_tsv(imputed_list_of_vcfs_file)
     #Array[File] imputed_files = glob(imputed_files_dir + "/*.dose.vcf.gz")
 
     scatter (imputed_file in imputed_files) {
 		call vcf_to_bgen {
 			input:
-                vcf_file = imputed_file[0]
+                vcf_file = imputed_file[0],
+                samples_to_keep_file = samples_to_keep_file
 		}
         call index_bgen_file {
             input:
@@ -244,17 +245,25 @@ task vcf_to_plink_bed {
 
 task vcf_to_bgen {
     File vcf_file
-    String prefix = basename(vcf_file, ".vcf.gz")
-    Int? bits=8
+    File samples_to_keep_file
 
+    Int? bits=8
     Int? memory = 60
+    Int? memory_in_MB = 60000
     Int? disk = 100
 
+    String prefix = basename(vcf_file, ".vcf.gz")
+    
+
 	command <<<
-        /plink2 --vcf ${vcf_file} dosage=DS \
+        /plink2 --memory ${memory_in_MB} --vcf ${vcf_file} dosage=HDS --id-delim _\
             --make-pgen erase-phase --out plink_out
 
-        /plink2 --pfile plink_out --export bgen-1.2 bits=${bits} --out ${prefix}
+        /plink2 --memory ${memory_in_MB} --pfile plink_out --keep ${samples_to_keep_file} \
+            --recode --export bgen-1.2 bits=${bits} --out ${prefix}
+
+        ## mysterious file format discrepancy causes failures with FASTGWA; change NA values to 0 in sample files
+        sed 's/NA$/0/' ${prefix}.sample > ${prefix}-noNAs.sample    
 	>>>
 
 	runtime {
@@ -266,13 +275,16 @@ task vcf_to_bgen {
 
 	output {
 		File out_bgen = "${prefix}.bgen"
-		File out_bgen_sample = "${prefix}.sample"
+		File out_bgen_sample = "${prefix}-noNAs.sample"
 		File out_bgen_log = "${prefix}.log"
 	}
 }
 
 task index_bgen_file {
     File bgen_file
+
+    Int? memory = 60
+    Int? disk = 100
 
     command {
         bgenix -g ${bgen_file} -index -clobber
@@ -281,6 +293,13 @@ task index_bgen_file {
     output {
         File bgen_file_index = "${bgen_file}.bgi"
     }
+
+    runtime {
+		docker: "quay.io/shukwong/bgen:fe6d17aa6933"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
 }
 
 task liftover_plink {
