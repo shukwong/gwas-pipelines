@@ -3,6 +3,7 @@
  "run_preprocess.genotype_bim": "File",
  "run_preprocess.genotype_fam": "File",
  "run_preprocess.chain_file": "File",
- "run_preprocess.samples_to_keep_file": "File",
+ "run_preprocess.gsa_samples_to_keep_file": "File",
+ "run_preprocess.imputed_samples_to_keep_file": "File",
  "run_preprocess.imputed_list_of_vcfs_file": "File" 
 }

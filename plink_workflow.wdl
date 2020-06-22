@@ -5,7 +5,8 @@ workflow run_preprocess {
 	File genotype_bim
 	File genotype_fam
 
-    File samples_to_keep_file
+    File gsa_samples_to_keep_file
+    File imputed_samples_to_keep_file
     File imputed_list_of_vcfs_file
     
     File chain_file
