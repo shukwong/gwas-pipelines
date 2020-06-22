@@ -249,19 +249,19 @@ task vcf_to_bgen {
     File samples_to_keep_file
 
     Int? bits=8
-    Int? memory = 60
-    Int? memory_in_MB = 60000
+    Int? memory = 24
+    Int? memory_in_MB = 24000
     Int? disk = 100
 
     String prefix = basename(vcf_file, ".vcf.gz")
     
 
 	command <<<
-        /plink2 --memory ${memory_in_MB} --vcf ${vcf_file} dosage=HDS --id-delim _\
+        /plink2 --memory ${memory_in_MB} --vcf ${vcf_file} dosage=HDS --id-delim _ \
             --make-pgen erase-phase --out plink_out
 
         /plink2 --memory ${memory_in_MB} --pfile plink_out --keep ${samples_to_keep_file} \
-            --recode --export bgen-1.2 bits=${bits} --out ${prefix}
+            --export bgen-1.2 bits=${bits} --out ${prefix}
 
         ## mysterious file format discrepancy causes failures with FASTGWA; change NA values to 0 in sample files
         sed 's/NA$/0/' ${prefix}.sample > ${prefix}-noNAs.sample    
@@ -376,6 +376,36 @@ task plink_subset_sample {
 
     output {
 	    File genotype_subsetSample_bed = "genotype_subsetSample.bed"
+        File genotype_subsetSample_bim = "genotype_subsetSample.bim"
+        File genotype_subsetSample_fam = "genotype_subsetSample.fam"
+    }
+}
+
+task add_pcs_to_covar_file {
+    File eigenvec_file
+    File covar_file
+    File samples_to_keep_file
+
+
+    Int? memory = 32
+    Int? disk = 20
+
+    command {
+        Rscript construct_model_matrix.R ${covar_file} ${samples_to_keep_file}
+    }
+
+    ## build a model matrix. See gitlab, this is a mess, as it's trying to autoresolve covariates with high collinearity, transform things, etc.
+Rscript shared-source/construct_model_matrix.R phenotypes/v5/gsa_qx_v5.with_na.augmented.28may2020.tsv results/j_pros_cancer/European/SAIGE/j_pros_cancer.GSA_batch1.saige.samples European GSA_batch1 j_pros_cancer sex,is.other.asian,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10,center,batch.GSA,batch.Oncoarray,batch.OmniX,batch.Omni25 results/j_pros_cancer/European/SAIGE/j_pros_cancer.GSA_batch1.saige.model_matrix
+
+    runtime {
+		docker: "rocker/tidyverse:3.6.3-ubuntu18.04"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File out_covar_file = "model_matrix"
         File genotype_subsetSample_bim = "genotype_subsetSample.bim"
         File genotype_subsetSample_fam = "genotype_subsetSample.fam"
     }
