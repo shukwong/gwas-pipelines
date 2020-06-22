@@ -16,7 +16,7 @@ workflow run_preprocess {
              genotype_bed = genotype_bed, 
              genotype_bim = genotype_bim,
              genotype_fam = genotype_fam,
-             samples_to_keep_file = samples_to_keep_file
+             samples_to_keep_file = gsa_samples_to_keep_file
     }
 
     call run_genotype_qc_filter {
@@ -57,7 +57,7 @@ workflow run_preprocess {
 		call vcf_to_bgen {
 			input:
                 vcf_file = imputed_file[0],
-                samples_to_keep_file = samples_to_keep_file
+                samples_to_keep_file = imputed_samples_to_keep_file
 		}
         call index_bgen_file {
             input:
