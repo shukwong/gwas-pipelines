@@ -7,7 +7,7 @@ workflow run_preprocess {
 	
     File chain_file
 
-    File imputed_files_dir
+    File imputed_samples_file
 
 	Int? memory = 60
 	Int? disk = 500
@@ -20,10 +20,32 @@ workflow run_preprocess {
              genotype_bim
              genotype_fam
              samples_to_keep_file
-             plink_bed_prefix
     }
 
-	call liftover_plink_bim {
+    call run_genotype_qc_filter {
+        input:
+            genotype_bed = plink_bed_subset_sample.genotype_subsetSample_bed
+            genotype_bim = plink_bed_subset_sample.genotype_subsetSample_bim
+            genotype_fam = plink_bed_subset_sample.genotype_subsetSample_fam
+
+    }
+
+ 	call run_ld_prune {
+        input:
+            genotype_bed = subset_plink_and_update_bim.gentoype_qc_filtered_bed,
+            genotype_bim = subset_plink_and_update_bim.gentoype_qc_filtered_bim,
+            genotype_fam = subset_plink_and_update_bim.gentoype_qc_filtered_fam
+    }
+
+	call plink_pca {
+        input:
+    		genotype_bed = run_ld_prune.genotype_pruned_bed,
+    	    genotype_bim = run_ld_prune.genotype_pruned_bim,
+    	    genotype_fam = run_ld_prune.genotype_pruned_fam
+            
+    }
+
+    call liftover_plink_bim {
         input:
     		genotype_bed = plink_bed_subset_sample.plink_bed,
     	    genotype_bim = plink_bed_subset_sample.plink_bim,
@@ -41,23 +63,8 @@ workflow run_preprocess {
     }
 
 
- 	call run_ld_prune {
-        input:
-            genotype_bed = subset_plink_and_update_bim.output_bed,
-            genotype_bim = subset_plink_and_update_bim.output_bim,
-            genotype_fam = subset_plink_and_update_bim.output_fam
-    }
-
-	call plink_pca {
-        input:
-    		genotype_bed = run_ld_prune.genotype_pruned_bed,
-    	    genotype_bim = run_ld_prune.genotype_pruned_bim,
-    	    genotype_fam = run_ld_prune.genotype_pruned_fam
-            
-    }
-
-	#Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
-    Array[File] imputed_files = glob(imputed_files_dir + "/*.dose.vcf.gz")
+	Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
+    #Array[File] imputed_files = glob(imputed_files_dir + "/*.dose.vcf.gz")
 
     scatter (imputed_file in imputed_files) {
 		call vcf_to_bgen {
@@ -113,13 +120,14 @@ task plink_pca {
 
 task run_genotype_qc_filter {
 	
-    File
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
 
     command <<<
 
 	plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} \
-              --maf 0.05 --geno 0.9 --make-bed
-
+              --maf 0.01 --geno 0.02 --hwe 0.001 --make-bed --out gentoype_qc_filtered
 
     >>>
 
@@ -130,9 +138,11 @@ task run_genotype_qc_filter {
                 gpu: false
 	}
 	
-     output {
-	File gentoype_qc_filtered_bed = "gentoype_qc_filtered.bed"	
-     }	
+    output {
+	    File gentoype_qc_filtered_bed = "gentoype_qc_filtered.bed"	
+        File gentoype_qc_filtered_bim = "gentoype_qc_filtered.bim"
+        File gentoype_qc_filtered_fam = "gentoype_qc_filtered.fam"
+    } 	
 }
 
 
@@ -143,7 +153,7 @@ task run_ld_prune {
     File genotype_fam
 
     Int? memory = 32
-    Int? disk = 500
+    Int? disk = 200
     
 
     command <<<
@@ -154,14 +164,19 @@ task run_ld_prune {
               --fam ${genotype_fam} --extract ld_indep_check.prune.in \
               --make-bed --out ld_indep_check.prune
 
-        plink --bfile /mnt/data/munge/ld_indep_check.prune  --indep-pairwise 50 5 0.5 \
-              --make-bed --out ld_indep_pairwise_check
+        plink --bfile /mnt/data/munge/ld_indep_check.prune  --indep-pairwise 50 5 0.2 \
+              -out ld_indep_pairwise_check
 
         plink --keep-allele-order --bfile /mnt/data/munge/ld_indep_check.prune \
               --extract ld_indep_pairwise_check.prune.in \
               --make-bed --out genotype_pruned_plink
-    >>>
 
+        plink --bfile genotype_pruned_plink --het --out genotype_pruned_plink_het
+        awk 'NR > 1 && sqrt($6^2) > sqrt(0.2^2) {print $1"\t"$1}' genotype_pruned_plink_het.het > genotype_pruned_plink_het.het.remove      
+        ## make a version of the data with QCed autosomal data for later
+        plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --remove genotype_pruned_plink_het.het.remove --autosome \
+              --make-bed --out genotype.nohet.autosomes
+    >>>
 
 	runtime {
 		docker: "quay.io/h3abionet_org/py3plink"
@@ -174,6 +189,9 @@ task run_ld_prune {
 	    File genotype_pruned_bed = "genotype_pruned_plink.bed"
         File genotype_pruned_bim = "genotype_pruned_plink.bim"
         File genotype_pruned_fam = "genotype_pruned_plink.fam"
+        File genotype_nohet_autosomes_bed = "genotype.nohet.autosomes.bed"
+        File genotype_nohet_autosomes_bim = "genotype.nohet.autosomes.bim"
+        File genotype_nohet_autosomes_fam = "genotype.nohet.autosomes.fam"
     }
 }
 
@@ -333,24 +351,21 @@ task subset_plink_and_update_bim {
     }
 }
 
-task plink_bed_subset_sample {
+task plink_subset_sample {
 
     File genotype_bed
     File genotype_bim
     File genotype_fam
     File samples_to_keep_file
 
-    String plink_bed_prefix
-
     Int? memory = 32
     Int? disk = 500
 	
     command {
 		
-	    plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${samples_to_keep_file} --make-bed --out ${plink_bed_prefix}
+	    plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${samples_to_keep_file} --make-bed --out genotype_subsetSample
 
     }
-
 
 	runtime {
 		docker: "quay.io/h3abionet_org/py3plink"
@@ -360,8 +375,8 @@ task plink_bed_subset_sample {
 	}
 
     output {
-	    File plink_bed = "${plink_bed_prefix}.bed"
-        File plink_bim = "${plink_bed_prefix}.bim"
-        File plink_fam = "${plink_bed_prefix}.fam"
+	    File genotype_subsetSample_bed = "genotype_subsetSample.bed"
+        File genotype_subsetSample_bim = "genotype_subsetSample.bim"
+        File genotype_subsetSample_fam = "genotype_subsetSample.fam"
     }
 }
