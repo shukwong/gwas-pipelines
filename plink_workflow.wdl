@@ -45,23 +45,13 @@ workflow run_preprocess {
             
     }
 
-    call liftover_plink_bim {
+    call liftover_plink {
         input:
     		genotype_bed = plink_bed_subset_sample.plink_bed,
     	    genotype_bim = plink_bed_subset_sample.plink_bim,
     	    genotype_fam = plink_bed_subset_sample.plink_fam,
             chain_file = chain_file
     }
-#TODO: merge this liftover and subset variants
-    call subset_plink_and_update_bim {
-        input:
-            genotype_bed = genotype_bed,
-            genotype_bim = genotype_bim,
-            genotype_fam = genotype_fam,
-            mapped_ids = liftover_plink_bim.mapped_ids,
-            mapped_bim = liftover_plink_bim.mapped_bim
-    }
-
 
 	Array[Array[File]] imputed_files = read_tsv(imputed_samples_file)
     #Array[File] imputed_files = glob(imputed_files_dir + "/*.dose.vcf.gz")
@@ -78,9 +68,9 @@ workflow run_preprocess {
 	}
 
 	output {
-        File genotype_pruned_bed = run_ld_prune.genotype_pruned_bed
-        File genotype_pruned_bim = run_ld_prune.genotype_pruned_bim
-        File genotype_pruned_fam = run_ld_prune.genotype_pruned_fam
+        File genotype_ready_bed = liftover_plink.output_bed
+        File genotype_ready_bim = liftover_plink.output_bim
+        File genotype_ready_fam = liftover_plink.output_fam
 		File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
  	}
     
@@ -290,7 +280,7 @@ task index_bgen_file {
     }
 }
 
-task liftover_plink_bim {
+task liftover_plink {
    	File genotype_bed
 	File genotype_bim
 	File genotype_fam
@@ -298,7 +288,7 @@ task liftover_plink_bim {
     File chain_file
 
     Int? memory = 32
-    Int? disk = 500
+    Int? disk = 200
 
     command <<<
 		
@@ -315,46 +305,17 @@ task liftover_plink_bim {
             | awk '{print $1"\tchr"$1":"$3":"$6":"$7"\t"$3"\t"$6"\t"$7}' > \
             bim_as_bed.mapped.bim
 
+         plink \
+            --bed ${genotype_bed} --bim ${genotype_bim} \
+            --fam ${genotype_fam} --extract bim_as_bed.mapped.ids \
+            --make-bed --out genotypes_updated
+            
+        cp bim_as_bed.mapped.bim genotypes_updated.bim       
+
     >>>
 
 	runtime {
 		docker: "crukcibioinformatics/crossmap"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-		gpu: false
-	}
-
-    output {
-	    File mapped_ids = "bim_as_bed.mapped.ids"
-        File mapped_bim = "bim_as_bed.mapped.bim"
-    }
-}
-
-task subset_plink_and_update_bim {
-
-    File genotype_bed
-    File genotype_bim
-    File genotype_fam
-    File mapped_ids
-    File mapped_bim
-   
-    Int? memory = 32
-    Int? disk = 500
-    
- 
-    command <<<
-
-        plink \
-            --bed ${genotype_bed} --bim ${genotype_bim} \
-            --fam ${genotype_fam} --extract ${mapped_ids} \
-            --make-bed --out genotypes_updated
-            
-        cp ${mapped_bim} genotypes_updated.bim   
-
-    >>>    
-
-	runtime {
-		docker: "quay.io/h3abionet_org/py3plink"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 		gpu: false
@@ -366,6 +327,8 @@ task subset_plink_and_update_bim {
         File output_fam = "genotypes_updated.fam"
     }
 }
+
+
 
 task plink_subset_sample {
 
