@@ -4,37 +4,33 @@ workflow run_preprocess {
 	File genotype_bed
 	File genotype_bim
 	File genotype_fam
-	
+
+    File samples_to_keep_file
+    File imputed_samples_file
+    
     File chain_file
 
-    File imputed_samples_file
-
-	Int? memory = 60
-	Int? disk = 500
-	Int? threads = 16
-
-
-    call plink_bed_subset_sample {
+    call plink_subset_sample {
         input:
-             genotype_bed
-             genotype_bim
-             genotype_fam
-             samples_to_keep_file
+             genotype_bed = genotype_bed, 
+             genotype_bim = genotype_bim,
+             genotype_fam = genotype_fam,
+             samples_to_keep_file = samples_to_keep_file
     }
 
     call run_genotype_qc_filter {
         input:
-            genotype_bed = plink_bed_subset_sample.genotype_subsetSample_bed
-            genotype_bim = plink_bed_subset_sample.genotype_subsetSample_bim
-            genotype_fam = plink_bed_subset_sample.genotype_subsetSample_fam
+            genotype_bed = plink_subset_sample.genotype_subsetSample_bed,
+            genotype_bim = plink_subset_sample.genotype_subsetSample_bim,
+            genotype_fam = plink_subset_sample.genotype_subsetSample_fam
 
     }
 
  	call run_ld_prune {
         input:
-            genotype_bed = subset_plink_and_update_bim.gentoype_qc_filtered_bed,
-            genotype_bim = subset_plink_and_update_bim.gentoype_qc_filtered_bim,
-            genotype_fam = subset_plink_and_update_bim.gentoype_qc_filtered_fam
+            genotype_bed = run_genotype_qc_filter.gentoype_qc_filtered_bed,
+            genotype_bim = run_genotype_qc_filter.gentoype_qc_filtered_bim,
+            genotype_fam = run_genotype_qc_filter.gentoype_qc_filtered_fam
     }
 
 	call plink_pca {
@@ -47,9 +43,9 @@ workflow run_preprocess {
 
     call liftover_plink {
         input:
-    		genotype_bed = plink_bed_subset_sample.plink_bed,
-    	    genotype_bim = plink_bed_subset_sample.plink_bim,
-    	    genotype_fam = plink_bed_subset_sample.plink_fam,
+    		genotype_bed = run_ld_prune.genotype_pruned_bed,
+    	    genotype_bim = run_ld_prune.genotype_pruned_bim,
+    	    genotype_fam = run_ld_prune.genotype_pruned_fam,
             chain_file = chain_file
     }
 
@@ -59,11 +55,11 @@ workflow run_preprocess {
     scatter (imputed_file in imputed_files) {
 		call vcf_to_bgen {
 			input:
-                vcf_file = imputed_file
+                vcf_file = imputed_file[0]
 		}
         call index_bgen_file {
             input:
-                bgen_file = vcf_to_bgen.bgen_file
+                bgen_file = vcf_to_bgen.out_bgen
         }
 	}
 
@@ -72,6 +68,8 @@ workflow run_preprocess {
         File genotype_ready_bim = liftover_plink.output_bim
         File genotype_ready_fam = liftover_plink.output_fam
 		File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
+        Array[File] bgen_files = vcf_to_bgen.out_bgen
+        Array[File] bgen_file_indices = index_bgen_file.bgen_file_index
  	}
     
 
@@ -92,7 +90,7 @@ task plink_pca {
     String? approx = "approx"
 
     Int? memory = 60
-    Int? disk = 500
+    Int? disk = 200
 
     command {
 		/plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --pca ${approx} --out genotype_pruned_pca
@@ -118,6 +116,9 @@ task run_genotype_qc_filter {
     File genotype_bim
     File genotype_fam
 
+    Int? memory = 60
+    Int? disk = 200
+
     command <<<
 
 	plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} \
@@ -126,10 +127,10 @@ task run_genotype_qc_filter {
     >>>
 
     runtime {
-	docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
-                memory: "${memory} GB"
-                disks: "local-disk ${disk} HDD"
-                gpu: false
+	    docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+        memory: "${memory} GB"
+        disks: "local-disk ${disk} HDD"
+        gpu: false
 	}
 	
     output {
@@ -194,12 +195,14 @@ task plink_to_vcf {
 	File genotype_bed
 	File genotype_bim
 	File genotype_fam
-	String prefix = basename(genotype_bed, ".bed")
+
+    String prefix = basename (genotype_bed, ".bed")
+	
 	Int? memory = 32
-	Int? disk = 500
+	Int? disk = 200
 
 	command {
-        plink --bfile ${prefix} --recode vcf --out ${prefix}.vcf   
+        plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --recode vcf --out ${prefix}.vcf   
 	}
 
 	runtime {
@@ -219,7 +222,7 @@ task vcf_to_plink_bed {
 	File vcf_file
     String prefix = basename(vcf_file, ".vcf")
 	Int? memory = 32
-	Int? disk = 500
+	Int? disk = 200
 
 	command {
 		plink --vcf ${vcf_file}  --make-bed --out ${prefix}
@@ -245,7 +248,7 @@ task vcf_to_bgen {
     Int? bits=8
 
     Int? memory = 60
-    Int? disk = 500
+    Int? disk = 100
 
 	command <<<
         /plink2 --vcf ${vcf_file} dosage=DS \
@@ -296,11 +299,11 @@ task liftover_plink {
 
         CrossMap.py bed ${chain_file} bim_as_bed.bed bim_as_bed.crossmap.bed 
 
-        cat bim_as_bed.crossmap.bed  | grep -v ^chrUn | grep -v random \
+        grep -v ^chrUn bim_as_bed.crossmap.bed | grep -v random \
             | grep -v alt | grep -v ^chrX | grep -v ^chrY | sort -k1,1 -k2,2g \
             | cut -f4 >bim_as_bed.mapped.ids
 
-        cat bim_as_bed.crossmap.bed | grep -v ^chrUn | grep -v random | grep -v alt \
+        grep -v ^chrUn bim_as_bed.crossmap.bed | grep -v random | grep -v alt \
             | grep -v ^chrX | grep -v ^chrY | sort -k1,1 -k2,2g | sed 's/^chr//' \
             | awk '{print $1"\tchr"$1":"$3":"$6":"$7"\t"$3"\t"$6"\t"$7}' > \
             bim_as_bed.mapped.bim
@@ -341,9 +344,7 @@ task plink_subset_sample {
     Int? disk = 500
 	
     command {
-		
-	    plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${samples_to_keep_file} --make-bed --out genotype_subsetSample
-
+		plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${samples_to_keep_file} --make-bed --out genotype_subsetSample
     }
 
 	runtime {
