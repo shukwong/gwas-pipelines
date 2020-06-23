@@ -65,12 +65,12 @@ task match_genotye_and_imputed_samples {
     Int? disk = 200
     Int? threads = 32
 
-    command {
+    command <<<
         awk '{print $1"\t"$1}' ${imputed_samples_file}  > samples_plink_format.txt
 
         /plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep samples_plink_format.txt \
             --make-bed --out matched_genotype
-    }
+    >>>
 
     runtime {
 		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
