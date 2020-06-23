@@ -42,12 +42,22 @@ workflow run_preprocess {
             
     }
 
-    call liftover_plink {
+    call liftover_plink_bim {
         input:
     	    genotype_bed = run_ld_prune.genotype_pruned_bed,
     	    genotype_bim = run_ld_prune.genotype_pruned_bim,
     	    genotype_fam = run_ld_prune.genotype_pruned_fam,
             chain_file = chain_file
+    }
+
+    call liftover_plink {
+        input:
+    	    genotype_bed = run_ld_prune.genotype_pruned_bed,
+    	    genotype_bim = run_ld_prune.genotype_pruned_bim,
+    	    genotype_fam = run_ld_prune.genotype_pruned_fam,
+            liftover_mapped_ids_file = liftover_plink_bim.liftover_mapped_ids_file,
+            liftover_mapped_new_bim_file = liftover_plink_bim.liftover_mapped_new_bim_file
+           
     }
 
 	Array[Array[File]] imputed_files = read_tsv(imputed_list_of_vcfs_file)
@@ -308,6 +318,40 @@ task index_bgen_file {
 }
 
 task liftover_plink {
+    File genotype_bed
+	File genotype_bim
+	File genotype_fam
+    File liftover_mapped_ids_file
+    File liftover_mapped_new_bim_file
+
+    Int? memory = 32
+    Int? disk = 200
+
+    command {
+        plink \
+            --bed ${genotype_bed} --bim ${genotype_bim} \
+            --fam ${genotype_fam} --extract ${liftover_mapped_ids_file} \
+            --make-bed --out genotypes_updated
+            
+        cp ${liftover_mapped_new_bim_file} genotypes_updated.bim       
+    }
+
+    runtime {
+		docker: "quay.io/h3abionet_org/py3plink"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+		gpu: false
+	}
+
+    output {
+	    File output_bed = "genotypes_updated.bed"
+        File output_bim = "genotypes_updated.bim"
+        File output_fam = "genotypes_updated.fam"
+    }
+
+}
+
+task liftover_plink_bim {
    	File genotype_bed
 	File genotype_bim
 	File genotype_fam
@@ -331,15 +375,7 @@ task liftover_plink {
             | grep -v ^chrX | grep -v ^chrY | sort -k1,1 -k2,2g | sed 's/^chr//' \
             | awk '{print $1"\tchr"$1":"$3":"$6":"$7"\t"$3"\t"$6"\t"$7}' > \
             bim_as_bed.mapped.bim
-
-         plink \
-            --bed ${genotype_bed} --bim ${genotype_bim} \
-            --fam ${genotype_fam} --extract bim_as_bed.mapped.ids \
-            --make-bed --out genotypes_updated
-            
-        cp bim_as_bed.mapped.bim genotypes_updated.bim       
-
-    >>>
+    >>>        
 
 	runtime {
 		docker: "crukcibioinformatics/crossmap"
@@ -349,9 +385,8 @@ task liftover_plink {
 	}
 
     output {
-	    File output_bed = "genotypes_updated.bed"
-        File output_bim = "genotypes_updated.bim"
-        File output_fam = "genotypes_updated.fam"
+	    File liftover_mapped_ids_file = "bim_as_bed.mapped.ids"
+        File liftover_mapped_new_bim_file = "bim_as_bed.mapped.bim"
     }
 }
 
