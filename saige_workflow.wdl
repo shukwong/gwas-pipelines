@@ -6,7 +6,7 @@ workflow run_saige {
     File genotype_fam
 
     File bgen_list_file
-    File bgen_sample_file
+    File imputed_samples_file
     File pheno_file
 
     String phenoCol
@@ -14,22 +14,31 @@ workflow run_saige {
 
     Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
 
-    call saige_step1_fitNULL  {
+    call match_genotye_and_imputed_samples {
         input:
             genotype_bed = genotype_bed,
-	    genotype_bim = genotype_bim,
-	    genotype_fam = genotype_fam,
-	    pheno_file = pheno_file,
+            genotype_bim = genotype_bim,
+            genotype_fam = genotype_fam,
+            imputed_samples_file = imputed_samples_file
+    }
+
+    call saige_step1_fitNULL  {
+        input:
+            genotype_bed = match_genotye_and_imputed_samples.matched_genotype_bed,
+	        genotype_bim = match_genotye_and_imputed_samples.matched_genotype_bim,
+	        genotype_fam = match_genotye_and_imputed_samples.matched_genotype_fam,
+	        pheno_file = pheno_file,
             phenoCol = phenoCol,
             covarColList = covarColList
     }
 
     scatter (bgen_file_line in bgen_file_list) {
+
 	call saige_step2_SPAtests {
 	   input:
                 bgen_file = bgen_file_line[0],
                 bgen_file_index = bgen_file_line[1],
-                bgen_sample_file = bgen_sample_file,
+                imputed_samples_file = imputed_samples_file,
                 chrom = bgen_file_line[2],
                 gmmat_model_file = saige_step1_fitNULL.gmmat_model_file,
                 variance_ratio_file = saige_step1_fitNULL.variance_ratio_file,
@@ -42,6 +51,37 @@ workflow run_saige {
 	author : "Wendy Wong"
 	email : "wendy.wong@gmail.com"
 	description : "Run SAIGE"
+    }
+
+}
+
+task match_genotye_and_imputed_samples {
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
+    File imputed_samples_file
+
+    Int? memory = 32
+    Int? disk = 200
+    Int? threads = 32
+
+    command {
+        /plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${imputed_samples_file} \
+            --make-bed --out matched_genotype
+    }
+
+    runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		gpu: false
+	}
+
+    output {
+        File matched_genotype_bed = "matched_genotype.bed"
+        File matched_genotype_bim = "matched_genotype.bim"
+        File matched_genotype_fam = "matched_genotype.fam"
     }
 
 }
@@ -96,7 +136,7 @@ task saige_step2_SPAtests {
 
     File bgen_file
     File bgen_file_index
-    File bgen_sample_file
+    File imputed_samples_file
 
     File gmmat_model_file
     File variance_ratio_file
@@ -119,7 +159,7 @@ task saige_step2_SPAtests {
         --minMAF=0.01 \
         --minMAC=1 \
         --chrom=${chrom} \
-        --sampleFile=${bgen_sample_file} \
+        --sampleFile=${imputed_samples_file} \
         --GMMATmodelFile=${gmmat_model_file} \
         --varianceRatioFile=${variance_ratio_file} \
         --sparseSigmaFile=${sparse_sigma_file} \
@@ -128,6 +168,8 @@ task saige_step2_SPAtests {
         --IsOutputNinCaseCtrl=TRUE \
         --IsOutputHetHomCountsinCaseCtrl=TRUE \
         --IsOutputAFinCaseCtrl=TRUE
+
+        gzip ${saige_output_file_name}
 	}
 
 	runtime {
