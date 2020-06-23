@@ -1,9 +1,9 @@
 
 workflow run_preprocess {
     
-	File genotype_bed
-	File genotype_bim
-	File genotype_fam
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
 
     File gsa_samples_to_keep_file
     File imputed_samples_to_keep_file
@@ -27,16 +27,16 @@ workflow run_preprocess {
 
     }
 
- 	call run_ld_prune {
+    call run_ld_prune {
         input:
             genotype_bed = run_genotype_qc_filter.gentoype_qc_filtered_bed,
             genotype_bim = run_genotype_qc_filter.gentoype_qc_filtered_bim,
             genotype_fam = run_genotype_qc_filter.gentoype_qc_filtered_fam
     }
 
-	call plink_pca {
+    call plink_pca {
         input:
-    		genotype_bed = run_ld_prune.genotype_pruned_bed,
+    	    genotype_bed = run_ld_prune.genotype_pruned_bed,
     	    genotype_bim = run_ld_prune.genotype_pruned_bim,
     	    genotype_fam = run_ld_prune.genotype_pruned_fam
             
@@ -44,7 +44,7 @@ workflow run_preprocess {
 
     call liftover_plink {
         input:
-    		genotype_bed = run_ld_prune.genotype_pruned_bed,
+    	    genotype_bed = run_ld_prune.genotype_pruned_bed,
     	    genotype_bim = run_ld_prune.genotype_pruned_bim,
     	    genotype_fam = run_ld_prune.genotype_pruned_fam,
             chain_file = chain_file
@@ -54,8 +54,8 @@ workflow run_preprocess {
     #Array[File] imputed_files = glob(imputed_files_dir + "/*.dose.vcf.gz")
 
     scatter (imputed_file in imputed_files) {
-		call vcf_to_bgen {
-			input:
+	call vcf_to_bgen {
+	    input:
                 vcf_file = imputed_file[0],
                 samples_to_keep_file = imputed_samples_to_keep_file
 		}
@@ -66,12 +66,12 @@ workflow run_preprocess {
 	}
 
 	output {
-        File genotype_ready_bed = liftover_plink.output_bed
-        File genotype_ready_bim = liftover_plink.output_bim
-        File genotype_ready_fam = liftover_plink.output_fam
-		File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
-        Array[File] bgen_files = vcf_to_bgen.out_bgen
-        Array[File] bgen_file_indices = index_bgen_file.bgen_file_index
+          File genotype_ready_bed = liftover_plink.output_bed
+          File genotype_ready_bim = liftover_plink.output_bim
+          File genotype_ready_fam = liftover_plink.output_fam
+          File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
+          Array[File] bgen_files = vcf_to_bgen.out_bgen
+          Array[File] bgen_file_indices = index_bgen_file.bgen_file_index
  	}
     
 
@@ -106,8 +106,8 @@ task plink_pca {
 	}
 
     output {
-	    File genotype_pruned_pca_eigenvec = "genotype_pruned_pca.eigenvec"
-	    File genotype_pruned_pca_eigenval = "genotype_pruned_pca.eigenval"
+	File genotype_pruned_pca_eigenvec = "genotype_pruned_pca.eigenvec"
+	File genotype_pruned_pca_eigenval = "genotype_pruned_pca.eigenval"
         File genotype_pruned_pca_log = "genotype_pruned_pca.log"
     }
 }
@@ -123,20 +123,20 @@ task run_genotype_qc_filter {
 
     command <<<
 
-	plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} \
+	/plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} \
               --maf 0.01 --geno 0.02 --hwe 0.001 --make-bed --out gentoype_qc_filtered
 
     >>>
 
     runtime {
-	    docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+	docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
         memory: "${memory} GB"
         disks: "local-disk ${disk} HDD"
         gpu: false
-	}
+    }
 	
     output {
-	    File gentoype_qc_filtered_bed = "gentoype_qc_filtered.bed"	
+	File gentoype_qc_filtered_bed = "gentoype_qc_filtered.bed"	
         File gentoype_qc_filtered_bim = "gentoype_qc_filtered.bim"
         File gentoype_qc_filtered_fam = "gentoype_qc_filtered.fam"
     } 	
@@ -161,17 +161,18 @@ task run_ld_prune {
               --fam ${genotype_fam} --extract ld_indep_check.prune.in \
               --make-bed --out ld_indep_check.prune
 
-        plink --bfile /mnt/data/munge/ld_indep_check.prune  --indep-pairwise 50 5 0.2 \
+        plink --bfile ld_indep_check.prune  --indep-pairwise 50 5 0.2 \
               -out ld_indep_pairwise_check
 
-        plink --keep-allele-order --bfile /mnt/data/munge/ld_indep_check.prune \
+        plink --keep-allele-order --bfile ld_indep_check.prune \
               --extract ld_indep_pairwise_check.prune.in \
               --make-bed --out genotype_pruned_plink
 
         plink --bfile genotype_pruned_plink --het --out genotype_pruned_plink_het
         awk 'NR > 1 && sqrt($6^2) > sqrt(0.2^2) {print $1"\t"$1}' genotype_pruned_plink_het.het > genotype_pruned_plink_het.het.remove      
         ## make a version of the data with QCed autosomal data for later
-        plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --remove genotype_pruned_plink_het.het.remove --autosome \
+        plink --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} \
+              --remove genotype_pruned_plink_het.het.remove --autosome \
               --make-bed --out genotype.nohet.autosomes
     >>>
 
@@ -183,7 +184,7 @@ task run_ld_prune {
 	}
 
     output {
-	    File genotype_pruned_bed = "genotype_pruned_plink.bed"
+	File genotype_pruned_bed = "genotype_pruned_plink.bed"
         File genotype_pruned_bim = "genotype_pruned_plink.bim"
         File genotype_pruned_fam = "genotype_pruned_plink.fam"
         File genotype_nohet_autosomes_bed = "genotype.nohet.autosomes.bed"
@@ -198,7 +199,7 @@ task plink_to_vcf {
 	File genotype_bim
 	File genotype_fam
 
-    String prefix = basename (genotype_bed, ".bed")
+        String prefix = basename (genotype_bed, ".bed")
 	
 	Int? memory = 32
 	Int? disk = 200
@@ -222,7 +223,7 @@ task plink_to_vcf {
 task vcf_to_plink_bed {
 
 	File vcf_file
-    String prefix = basename(vcf_file, ".vcf")
+        String prefix = basename(vcf_file, ".vcf")
 	Int? memory = 32
 	Int? disk = 200
 
@@ -284,15 +285,18 @@ task vcf_to_bgen {
 task index_bgen_file {
     File bgen_file
 
+    String bgen_filename = basename(bgen_file)	
+
     Int? memory = 60
     Int? disk = 100
 
     command {
         bgenix -g ${bgen_file} -index -clobber
+	mv ${bgen_file}.bgi ./
     }
 
     output {
-        File bgen_file_index = "${bgen_file}.bgi"
+        File bgen_file_index = "${bgen_filename}.bgi"
     }
 
     runtime {
@@ -375,7 +379,7 @@ task plink_subset_sample {
 	}
 
     output {
-	    File genotype_subsetSample_bed = "genotype_subsetSample.bed"
+	File genotype_subsetSample_bed = "genotype_subsetSample.bed"
         File genotype_subsetSample_bim = "genotype_subsetSample.bim"
         File genotype_subsetSample_fam = "genotype_subsetSample.fam"
     }
