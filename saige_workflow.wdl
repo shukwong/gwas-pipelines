@@ -66,7 +66,9 @@ task match_genotye_and_imputed_samples {
     Int? threads = 32
 
     command {
-        /plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep ${imputed_samples_file} \
+        awk '{print $1"\t"$1}' ${imputed_samples_file}  > samples_plink_format.txt
+
+        /plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep samples_plink_format.txt \
             --make-bed --out matched_genotype
     }
 
