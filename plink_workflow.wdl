@@ -276,6 +276,8 @@ task vcf_to_bgen {
 
         ## mysterious file format discrepancy causes failures with FASTGWA; change NA values to 0 in sample files
         sed 's/NA$/0/' ${prefix}.sample > ${prefix}-noNAs.sample    
+
+        awk 'NR > 2 {print $1}' ${prefix}-noNAs.sample  > ${prefix}_bgen._saige.sample #samples file for saige
 	>>>
 
 	runtime {
@@ -289,6 +291,7 @@ task vcf_to_bgen {
 		File out_bgen = "${prefix}.bgen"
 		File out_bgen_sample = "${prefix}-noNAs.sample"
 		File out_bgen_log = "${prefix}.log"
+        File out_bgen_saige_sample = "${prefix}_bgen._saige.sample"
 	}
 }
 
