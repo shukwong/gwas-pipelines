@@ -116,6 +116,9 @@ task saige_step1_fitNULL {
             --relatednessCutoff=${relatedness_cutoff} \
             --outputPrefix=saige_step1_${phenoCol} \
             --nThreads=${threads}
+	
+	spaseSigma_file=( "*.sparseSigma.mtx" )
+	mv $spaseSigma_file saige_step1_${phenoCol}.sparseSigma.mtx
 	}
 
     runtime {
@@ -129,7 +132,7 @@ task saige_step1_fitNULL {
     output {
 	File gmmat_model_file = "saige_step1_${phenoCol}.rda"
         File variance_ratio_file = "saige_step1_${phenoCol}.varianceRatio.txt"
-        File sparse_sigma_file = "saige_step1_${phenoCol}.sparse_sigma_file.txt"
+        File sparse_sigma_file = "saige_step1_${phenoCol}.sparseSigma.mtx"
     }
 }
 
