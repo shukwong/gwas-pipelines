@@ -17,7 +17,7 @@ workflow run_saige {
 
     Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
 
-    call match_genotye_and_imputed_samples {
+    call match_genotype_and_imputed_samples {
         input:
             genotype_bed = genotype_bed,
             genotype_bim = genotype_bim,
@@ -102,7 +102,7 @@ task addPCs_to_covar_matrix {
     }
 }
 
-task match_genotye_and_imputed_samples {
+task match_genotype_and_imputed_samples {
     File genotype_bed
     File genotype_bim
     File genotype_fam
