@@ -7,10 +7,13 @@ workflow run_saige {
 
     File bgen_list_file
     File imputed_samples_file
-    File pheno_file
+    File covar_file
+    File plink_pca_eigenvec_file
 
     String phenoCol
     String covarColList #covar list, separated by comma
+    String covar_sampleID_colname
+    
 
     Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
 
@@ -22,12 +25,24 @@ workflow run_saige {
             imputed_samples_file = imputed_samples_file
     }
 
+  
+    call addPCs_to_covar_matrix {
+        input:
+            covar_file = covar_file, 
+            plink_pca_eigenvec_file = plink_pca_eigenvec_file,
+            phenoCol = phenoCol,
+            covar_sampleID_colname = covar_sampleID_colname, 
+            covarColList = covarColList,
+            sampleFile = imputed_samples_file
+    }
+    
+
     call saige_step1_fitNULL  {
         input:
             genotype_bed = match_genotye_and_imputed_samples.matched_genotype_bed,
 	        genotype_bim = match_genotye_and_imputed_samples.matched_genotype_bim,
 	        genotype_fam = match_genotye_and_imputed_samples.matched_genotype_fam,
-	        pheno_file = pheno_file,
+	        covar_file = addPCs_to_covar_matrix.covar_file_with_pcs, 
             phenoCol = phenoCol,
             covarColList = covarColList
     }
@@ -53,6 +68,38 @@ workflow run_saige {
 	description : "Run SAIGE"
     }
 
+}
+
+task addPCs_to_covar_matrix {
+    File covar_file 
+    File plink_pca_eigenvec_file
+    
+    String phenoCol
+    String covar_sampleID_colname
+    String covarColList
+
+    File? sampleFile
+
+    Int? memory = 8
+    Int? disk = 20
+    Int? threads = 1
+
+    command {
+        Rscript combine_covars.R ${covar_file} ${plink_pca_eigenvec_file} ${phenoCol} \
+            ${covar_sampleID_colname} ${covarColList} pcs_${covar_file} ${sampleFile}
+    }
+
+    runtime {
+		docker: "rocker/tidyverse:3.6.3"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		gpu: false
+	}
+
+    output {
+        File covar_file_with_pcs =  "pcs_${covar_file}"
+    }
 }
 
 task match_genotye_and_imputed_samples {
@@ -94,7 +141,7 @@ task saige_step1_fitNULL {
     File genotype_bed
     File genotype_bim
     File genotype_fam
-    File pheno_file #pheno_file needs to include covars
+    File covar_file #covar_file needs to include covars
 
     String phenoCol
     String covarColList #covar list, separated by comma
@@ -107,7 +154,7 @@ task saige_step1_fitNULL {
     command {
         step1_fitNULLGLMM.R     \
             --plinkFile=${sub(genotype_bed,'\\.bed$','')} \
-            --phenoFile=${pheno_file} \
+            --phenoFile=${covar_file} \
             --phenoCol=${phenoCol} \
             --covarColList=${covarColList} \
             --sampleIDColinphenoFile=IID \
