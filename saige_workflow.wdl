@@ -39,9 +39,9 @@ workflow run_saige {
 
     call saige_step1_fitNULL  {
         input:
-            genotype_bed = match_genotye_and_imputed_samples.matched_genotype_bed,
-	        genotype_bim = match_genotye_and_imputed_samples.matched_genotype_bim,
-	        genotype_fam = match_genotye_and_imputed_samples.matched_genotype_fam,
+            genotype_bed = match_genotype_and_imputed_samples.matched_genotype_bed,
+	        genotype_bim = match_genotype_and_imputed_samples.matched_genotype_bim,
+	        genotype_fam = match_genotype_and_imputed_samples.matched_genotype_fam,
 	        covar_file = addPCs_to_covar_matrix.covar_file_with_pcs, 
             phenoCol = phenoCol,
             covarColList = covarColList
