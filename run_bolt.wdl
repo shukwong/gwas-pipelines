@@ -11,14 +11,13 @@ task run_bolt {
     File imputed_bgen_filelist
 
     String pheno_col
-    String genotype_stats_filename = bolt_genotype_stats_${pheno_col}.gz
-    String imputed_stats_filename = bolt_imputed_stats_${pheno_col}.gz
+    String qCovarCol 
 
-    Array[File] imputed_bgen_files = read_tsv(imputed_bgen_filelist)
-    Array[String] bgen_files_with_input_option = prefix("--input ", imputed_bgen_files[0]) 
+    Array[Array[String]] imputed_bgen_files = read_tsv(imputed_bgen_filelist)
+    Array[String] bgen_files_with_input_option = prefix("--bgenFile ", imputed_bgen_files[0]) 
     
 	Int? memory = 32
-	Int? disk = 500
+	Int? disk = 200
     Int? threads = 32
 
 	command {
@@ -33,14 +32,13 @@ task run_bolt {
             --lmmForceNonInf \
             --numThreads=${threads} \
             --covarFile=${covar_file} \
-            --qCovarCol=PC{1:10} \
-            --statsFile=${genotype_stats_filename} \
+            --qCovarCol=${qCovarCol} \
+            --statsFile=bolt_genotype_stats_${pheno_col}.gz \
             ${sep=" " bgen_files_with_input_option} \
-            --bgenFile=${imputed_bgen_file} \
             --bgenMinMAF=0.01 \
             --bgenMinINFO=0.3 \
             --sampleFile=${imputed_sample_file} \
-            --statsFileBgenSnps=${imputed_stats_filename} \
+            --statsFileBgenSnps=bolt_imputed_stats_${pheno_col}.gz \
             --noBgenIDcheck \
             --verboseStats
 	}
@@ -49,12 +47,12 @@ task run_bolt {
 		docker: "quay.io/shukwong/bolt-lmm:2.3.4"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
-        cpu: ${threads}
+        cpu: "${threads}"
 		gpu: false
 	}
 
 	output {
-		File genotype_stats_file = "${genotype_stats_filename}"
-        File imputed_stats_file = "${imputed_stats_filename}"
+		File genotype_stats_file = "bolt_genotype_stats_${pheno_col}.gz"
+        File imputed_stats_file = "bolt_imputed_stats_${pheno_col}.gz"
 	}
 }
