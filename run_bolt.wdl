@@ -1,3 +1,39 @@
+workflow run_preprocess {
+    
+	File genotype_bed
+	File genotype_bim
+	File genotype_fam
+    File pheno_file
+    File ld_scores_file
+    File genetic_map_file
+    File imputed_sample_file
+    File covar_file
+    File imputed_bgen_filelist
+
+    String pheno_col
+    String qCovarCol 
+
+    call run_bolt {
+        input:
+            genotype_bed = genotype_bed,
+	        genotype_bim = genotype_bim,
+	        genotype_fam = genotype_fam,
+            pheno_file = pheno_file,
+            ld_scores_file = ld_scores_file,
+            genetic_map_file = genetic_map_file,
+            imputed_sample_file = imputed_sample_file,
+            covar_file = covar_file,
+            imputed_bgen_filelist = imputed_bgen_filelist,
+            pheno_col = pheno_col,
+            qCovarCol = qCovarCol
+    }
+
+    output {
+		File genotype_stats_file = run_bolt.genotype_stats_file
+        File imputed_stats_file = run_bolt.imputed_stats_file
+	}
+}    
+
 task run_bolt {
 
 	File genotype_bed
