@@ -1,4 +1,4 @@
-workflow run_preprocess {
+workflow bolt_lmm_workflow {
     
 	File genotype_bed
 	File genotype_bim
@@ -11,7 +11,7 @@ workflow run_preprocess {
     File imputed_bgen_filelist
 
     String pheno_col
-    String qCovarCol 
+    String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
 
     call run_bolt {
         input:
@@ -31,6 +31,7 @@ workflow run_preprocess {
     output {
 		File genotype_stats_file = run_bolt.genotype_stats_file
         File imputed_stats_file = run_bolt.imputed_stats_file
+        File bolt_lmm_log_file = run_bolt.bolt_lmm_log_file
 	}
 }    
 
@@ -47,7 +48,7 @@ task run_bolt {
     File imputed_bgen_filelist
 
     String pheno_col
-    String qCovarCol 
+    String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
 
     Array[Array[String]] imputed_bgen_files = read_tsv(imputed_bgen_filelist)
     Array[String] bgen_files_with_input_option = prefix("--bgenFile ", imputed_bgen_files[0]) 
@@ -61,6 +62,7 @@ task run_bolt {
             --bed=${genotype_bed} \
             --bim=${genotype_bim} \
             --fam=${genotype_fam} \
+            ${sep=" " bgen_files_with_input_option} \
             --phenoFile=${pheno_file} \
             --phenoCol=${pheno_col} \
             --LDscoresFile=${ld_scores_file} \
@@ -68,15 +70,14 @@ task run_bolt {
             --lmmForceNonInf \
             --numThreads=${threads} \
             --covarFile=${covar_file} \
-            --qCovarCol=${qCovarCol} \
+            ${qCovarCol} \
             --statsFile=bolt_genotype_stats_${pheno_col}.gz \
-            ${sep=" " bgen_files_with_input_option} \
             --bgenMinMAF=0.01 \
             --bgenMinINFO=0.3 \
             --sampleFile=${imputed_sample_file} \
             --statsFileBgenSnps=bolt_imputed_stats_${pheno_col}.gz \
             --noBgenIDcheck \
-            --verboseStats
+            --verboseStats > ${pheno_col}.boltlmm.log 2>&1
 	}
 
 	runtime {
@@ -90,5 +91,6 @@ task run_bolt {
 	output {
 		File genotype_stats_file = "bolt_genotype_stats_${pheno_col}.gz"
         File imputed_stats_file = "bolt_imputed_stats_${pheno_col}.gz"
+        File bolt_lmm_log_file = "${pheno_col}.boltlmm.log"
 	}
 }

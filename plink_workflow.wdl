@@ -172,7 +172,7 @@ task run_ld_prune {
               --make-bed --out ld_indep_check.prune
 
         plink --bfile ld_indep_check.prune  --indep-pairwise 50 5 0.2 \
-              -out ld_indep_pairwise_check
+              --out ld_indep_pairwise_check
 
         plink --keep-allele-order --bfile ld_indep_check.prune \
               --extract ld_indep_pairwise_check.prune.in \
