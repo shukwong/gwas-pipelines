@@ -8,7 +8,7 @@ workflow bolt_lmm_workflow {
     File pheno_file
     File ld_scores_file
     File genetic_map_file
-    File imputed_sample_file
+    File imputed_samples_file
     File covar_file
     File bgen_file
 
@@ -16,16 +16,23 @@ workflow bolt_lmm_workflow {
     String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
 
     #preprocess 
+    call preprocess.match_genotype_and_imputed_samples {
+         input:
+            genotype_bed = genotype_bed,
+            genotype_bim = genotype_bim,
+            genotype_fam = genotype_fam,
+            imputed_samples_file = imputed_samples_file
+    }
 
     call run_bolt {
         input:
-            genotype_bed = genotype_bed,
-	        genotype_bim = genotype_bim,
-	        genotype_fam = genotype_fam,
+            genotype_bed = match_genotype_and_imputed_samples.matched_genotype_bed,
+	        genotype_bim = match_genotype_and_imputed_samples.matched_genotype_bim,
+	        genotype_fam = match_genotype_and_imputed_samples.matched_genotype_fam,
             pheno_file = pheno_file,
             ld_scores_file = ld_scores_file,
             genetic_map_file = genetic_map_file,
-            imputed_sample_file = imputed_sample_file,
+            imputed_sample_file = imputed_samples_file,
             covar_file = covar_file,
             bgen_file = bgen_file,
             pheno_col = pheno_col,
