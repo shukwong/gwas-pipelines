@@ -10,7 +10,7 @@ workflow bolt_lmm_workflow {
     File genetic_map_file
     File imputed_sample_file
     File covar_file
-    File imputed_bgen_filelist
+    File bgen_file
 
     String pheno_col
     String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
@@ -27,7 +27,7 @@ workflow bolt_lmm_workflow {
             genetic_map_file = genetic_map_file,
             imputed_sample_file = imputed_sample_file,
             covar_file = covar_file,
-            imputed_bgen_filelist = imputed_bgen_filelist,
+            bgen_file = bgen_file,
             pheno_col = pheno_col,
             qCovarCol = qCovarCol
     }
@@ -49,13 +49,13 @@ task run_bolt {
     File genetic_map_file
     File imputed_sample_file
     File covar_file
-    File imputed_bgen_filelist
+    File bgen_file
 
     String pheno_col
     String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
 
-    Array[File] imputed_bgen_files = read_lines(imputed_bgen_filelist)
-    Array[String] bgen_files_with_input_option = prefix("--bgenFile ", imputed_bgen_files) 
+    #Array[File] imputed_bgen_files = read_lines(imputed_bgen_filelist)
+    #Array[String] bgen_files_with_input_option = prefix("--bgenFile ", imputed_bgen_files) 
     
 	Int? memory = 32
 	Int? disk = 200
@@ -66,7 +66,7 @@ task run_bolt {
             --bed=${genotype_bed} \
             --bim=${genotype_bim} \
             --fam=${genotype_fam} \
-            ${sep=" " bgen_files_with_input_option} \
+            --bgenFile ${bgen_file} \
             --phenoFile=${pheno_file} \
             --phenoCol=${pheno_col} \
             --LDscoresFile=${ld_scores_file} \
