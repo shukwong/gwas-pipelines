@@ -54,8 +54,8 @@ task run_bolt {
     String pheno_col
     String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
 
-    Array[Array[String]] imputed_bgen_files = read_tsv(imputed_bgen_filelist)
-    Array[String] bgen_files_with_input_option = prefix("--bgenFile ", imputed_bgen_files[0]) 
+    Array[File] imputed_bgen_files = read_lines(imputed_bgen_filelist)
+    Array[String] bgen_files_with_input_option = prefix("--bgenFile ", imputed_bgen_files) 
     
 	Int? memory = 32
 	Int? disk = 200
@@ -76,8 +76,6 @@ task run_bolt {
             --covarFile=${covar_file} \
             ${qCovarCol} \
             --statsFile=bolt_genotype_stats_${pheno_col}.gz \
-            --bgenMinMAF=0.01 \
-            --bgenMinINFO=0.3 \
             --sampleFile=${imputed_sample_file} \
             --statsFileBgenSnps=bolt_imputed_stats_${pheno_col}.gz \
             --noBgenIDcheck \
