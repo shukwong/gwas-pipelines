@@ -1,3 +1,5 @@
+import "plink_workflow.wdl" as preprocess
+
 workflow bolt_lmm_workflow {
     
 	File genotype_bed
@@ -12,6 +14,8 @@ workflow bolt_lmm_workflow {
 
     String pheno_col
     String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
+
+    #preprocess 
 
     call run_bolt {
         input:
