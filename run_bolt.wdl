@@ -79,6 +79,7 @@ task run_bolt {
             --LDscoresFile=${ld_scores_file} \
             --geneticMapFile=${genetic_map_file} \
             --lmmForceNonInf \
+            --LDscoresMatchBp \
             --numThreads=${threads} \
             --covarFile=${covar_file} \
             ${qCovarCol} \
