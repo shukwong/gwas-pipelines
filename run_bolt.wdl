@@ -1,4 +1,4 @@
-import "plink_workflow.wdl" as preprocess
+#import "plink_workflow.wdl" as preprocess
 
 workflow bolt_lmm_workflow {
     
@@ -16,19 +16,22 @@ workflow bolt_lmm_workflow {
     String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
 
     #preprocess 
-    call preprocess.match_genotype_and_imputed_samples {
-         input:
-            genotype_bed = genotype_bed,
-            genotype_bim = genotype_bim,
-            genotype_fam = genotype_fam,
-            imputed_samples_file = imputed_samples_file
-    }
+    # call preprocess.match_genotype_and_imputed_samples {
+    #      input:
+    #         genotype_bed = genotype_bed,
+    #         genotype_bim = genotype_bim,
+    #         genotype_fam = genotype_fam,
+    #         imputed_samples_file = imputed_samples_file
+    # }
 
     call run_bolt {
         input:
-            genotype_bed = match_genotype_and_imputed_samples.matched_genotype_bed,
-	        genotype_bim = match_genotype_and_imputed_samples.matched_genotype_bim,
-	        genotype_fam = match_genotype_and_imputed_samples.matched_genotype_fam,
+            # genotype_bed = match_genotype_and_imputed_samples.matched_genotype_bed,
+	        # genotype_bim = match_genotype_and_imputed_samples.matched_genotype_bim,
+	        # genotype_fam = match_genotype_and_imputed_samples.matched_genotype_fam,
+            genotype_bed = genotype_bed,
+            genotype_bim = genotype_bim,
+            genotype_fam = genotype_fam,
             pheno_file = pheno_file,
             ld_scores_file = ld_scores_file,
             genetic_map_file = genetic_map_file,
@@ -67,6 +70,7 @@ task run_bolt {
 	Int? memory = 32
 	Int? disk = 200
     Int? threads = 32
+    Int? preemptible_tries = 3
 
 	command {
         bolt \
@@ -95,7 +99,7 @@ task run_bolt {
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
-		gpu: false
+		preemptible: preemptible_tries
 	}
 
 	output {
