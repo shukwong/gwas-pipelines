@@ -35,7 +35,7 @@ workflow bolt_lmm_workflow {
             pheno_file = pheno_file,
             ld_scores_file = ld_scores_file,
             genetic_map_file = genetic_map_file,
-            imputed_sample_file = imputed_samples_file,
+            imputed_samples_file = imputed_samples_file,
             covar_file = covar_file,
             bgen_file = bgen_file,
             pheno_col = pheno_col,
@@ -57,7 +57,7 @@ task run_bolt {
     File pheno_file
     File ld_scores_file
     File genetic_map_file
-    File imputed_sample_file
+    File imputed_samples_file
     File covar_file
     File bgen_file
 
@@ -88,7 +88,7 @@ task run_bolt {
             --covarFile=${covar_file} \
             ${qCovarCol} \
             --statsFile=bolt_genotype_stats_${pheno_col}.gz \
-            --sampleFile=${imputed_sample_file} \
+            --sampleFile=${imputed_samples_file} \
             --statsFileBgenSnps=bolt_imputed_stats_${pheno_col}.gz \
             --noBgenIDcheck \
             --verboseStats > ${pheno_col}.boltlmm.log 2>&1
