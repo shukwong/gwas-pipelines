@@ -20,7 +20,7 @@ workflow fastgwa_workflow {
 	            genotype_bim = genotype_bim,
 	            genotype_fam = genotype_fam,
                 num_parts = num_parts_make_grm_chunk,
-                part_number = part_number
+                part_number = part_number + 1
         }
     }
 
