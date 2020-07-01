@@ -47,7 +47,11 @@ workflow bolt_lmm_workflow {
         }
     }
 
-    call combine_bolt_results { input: imputed_stats_files=run_bolt.imputed_stats_file }
+    call combine_bolt_results { 
+        input: 
+           imputed_stats_files = run_bolt.imputed_stats_file, 
+           pheno_col = pheno_col
+    }
 
     output {
 		#File genotype_stats_file = run_bolt.genotype_stats_file
