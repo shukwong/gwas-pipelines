@@ -76,7 +76,7 @@ task gcta_make_grm_chunk {
 
 	command {
         gcta64 \
-            --bfile ${sub(genotype_bed.bed,".bed",''} \
+            --bfile ${sub(genotype_bed,".bed",'')} \
             --make-grm-part ${num_parts} ${part_number} --thread-num ${threads} \
             --out fastgwa_grm_part${part_number}_of_${num_parts}
      
@@ -160,7 +160,7 @@ task run_fastgwa {
              --bgen ${bgen_file} \
              --sample ${bgen_samples_file} \
              --fastGWA-mlm \
-             --grm-sparse ${sub(fastgwa_sparse_grm_bin_file,".bin",''} \
+             --grm-sparse ${sub(fastgwa_sparse_grm_bin_file,".bin",'')} \
              --pheno ${pheno_file} \
              --qcovar ${covar_file} \
              --threads ${threads} \
