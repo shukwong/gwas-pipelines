@@ -78,7 +78,7 @@ task gcta_make_grm_chunk {
         gcta64 \
             --bfile ${sub(genotype_bed,".bed",'')} \
             --make-grm-part ${num_parts} ${part_number} --thread-num ${threads} \
-            --out ./fastgwa_grm_part${part_number}_of_${num_parts}
+            --out /cromwell_root/fastgwa_grm_part${part_number}_of_${num_parts}
      
 	}
 
@@ -92,9 +92,9 @@ task gcta_make_grm_chunk {
 
 
 	output {
-		File fastgwa_grm_part_bin_file = "fastgwa_grm_part${part_number}_of_${num_parts}.grm.bin"
-        File fastgwa_grm_part_id_file = "fastgwa_grm_part${part_number}_of_${num_parts}.grm.id"
-        File fastgwa_grm_part_Nbin_file = "fastgwa_grm_part${part_number}_of_${num_parts}.grm.N.bin"
+		File fastgwa_grm_part_bin_file = "/cromwell_root/fastgwa_grm_part${part_number}_of_${num_parts}.grm.bin"
+        File fastgwa_grm_part_id_file = "/cromwell_root/fastgwa_grm_part${part_number}_of_${num_parts}.grm.id"
+        File fastgwa_grm_part_Nbin_file = "/cromwell_root/fastgwa_grm_part${part_number}_of_${num_parts}.grm.N.bin"
 	}
 }
 
