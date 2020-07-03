@@ -110,14 +110,14 @@ task gcta_merge_and_create_sparse_grm {
 
 	command {
 
-        cat ${sep=' ' fastgwa_grm_part_bin_files} > fastgwa_grm.bin
-        cat ${sep=' ' fastgwa_grm_part_id_files} > fastgwa_grm.id
-        cat ${sep=' ' fastgwa_grm_part_Nbin_files} > fastgwa_grm.N.bin
+        cat ${sep=' ' fastgwa_grm_part_bin_files} > fastgwa.grm.bin
+        cat ${sep=' ' fastgwa_grm_part_id_files} > fastgwa.grm.id
+        cat ${sep=' ' fastgwa_grm_part_Nbin_files} > fastgwa.grm.N.bin
 
         ## turn the results into a sparse GRM
-        gcta64 --grm fastgwa_grm \
+        gcta64 --grm fastgwa \
                --make-bK-sparse 0.05 \
-               --out fastgwa_sparse_grm
+               --out fastgwa_sparse
      
 	}
 
@@ -130,9 +130,9 @@ task gcta_merge_and_create_sparse_grm {
 	}
 
 	output {
-		File fastgwa_sparse_grm_bin_file = "fastgwa_sparse_grm.bin"
-        File fastgwa_sparse_grm_id_file = "fastgwa_sparse_grm.id"
-        File fastgwa_sparse_grm_Nbin_file = "fastgwa_sparse_grm.N.bin"
+		File fastgwa_sparse_grm_bin_file = "fastgwa_sparse.grm.bin"
+        File fastgwa_sparse_grm_id_file = "fastgwa_sparse.grm.id"
+        File fastgwa_sparse_grm_Nbin_file = "fastgwa_sparse.grm.N.bin"
 	}
 }
 
@@ -160,7 +160,7 @@ task run_fastgwa {
              --bgen ${bgen_file} \
              --sample ${bgen_samples_file} \
              --fastGWA-mlm \
-             --grm-sparse ${sub(fastgwa_sparse_grm_bin_file,".bin",'')} \
+             --grm-sparse ${sub(fastgwa_sparse_grm_bin_file,".grm.bin",'')} \
              --pheno ${pheno_file} \
              --qcovar ${covar_file} \
              --threads ${threads} \
