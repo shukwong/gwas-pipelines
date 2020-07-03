@@ -116,7 +116,7 @@ task gcta_merge_and_create_sparse_grm {
 
         ## turn the results into a sparse GRM
         gcta64 --grm fastgwa_grm \
-               --make-bK-sparse 0.05 
+               --make-bK-sparse 0.05 \
                --out fastgwa_sparse_grm
      
 	}
