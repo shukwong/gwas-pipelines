@@ -36,11 +36,11 @@ workflow fastgwa_workflow {
     scatter (bgen_file_line in bgen_file_list) {
         call run_fastgwa {
             input:
-                 fastgwa_sparse_grm_bin_file = gcta_merge_and_create_sparse_grm.fastgwa_sparse_grm_bin_file,
-	             fastgwa_sparse_grm_id_file = gcta_merge_and_create_sparse_grm.fastgwa_sparse_grm_id_file,
-                 fastgwa_sparse_grm_Nbin_file = gcta_merge_and_create_sparse_grm.fastgwa_sparse_grm_Nbin_file,
+                 fastgwa_sparse_grm_sp_file = gcta_merge_and_create_sparse_grm.fastgwa_sparse_grm_sp_file,
+	         fastgwa_sparse_grm_id_file = gcta_merge_and_create_sparse_grm.fastgwa_sparse_grm_id_file,
                  bgen_file = bgen_file_line[0],
-                 bgen_samples_file = imputed_samples_file,
+                 bgen_file_index = bgen_file_line[1],
+	         bgen_samples_file = imputed_samples_file,
                  pheno_file = pheno_file,
                  covar_file = covar_file,
                  pheno_col = pheno_col
@@ -130,37 +130,40 @@ task gcta_merge_and_create_sparse_grm {
 	}
 
 	output {
-		File fastgwa_sparse_grm_bin_file = "fastgwa_sparse.grm.bin"
-        File fastgwa_sparse_grm_id_file = "fastgwa_sparse.grm.id"
-        File fastgwa_sparse_grm_Nbin_file = "fastgwa_sparse.grm.N.bin"
+		File fastgwa_sparse_grm_sp_file = "fastgwa_sparse.grm.sp"
+                File fastgwa_sparse_grm_id_file = "fastgwa_sparse.grm.id"
 	}
 }
 
 
 task run_fastgwa {
 
-	File fastgwa_sparse_grm_bin_file
-	File fastgwa_sparse_grm_id_file
-    File fastgwa_sparse_grm_Nbin_file
+    File fastgwa_sparse_grm_sp_file
+    File fastgwa_sparse_grm_id_file
     File bgen_file
+    File bgen_file_index
     File bgen_samples_file
     File pheno_file
     File covar_file
 
     String pheno_col
     
-	Int? memory = 32
-	Int? disk = 100
+    Int? memory = 32
+    Int? disk = 100
     Int? threads = 8
     Int? preemptible_tries = 3
 
-	command {
+    String bgen_filename = basename(bgen_file)
+
+    command {
+        mv ${bgen_file} ./
+	mv ${bgen_file_index} ./
 
         gcta64 \
-             --bgen ${bgen_file} \
+             --bgen ${bgen_filename} \
              --sample ${bgen_samples_file} \
              --fastGWA-mlm \
-             --grm-sparse ${sub(fastgwa_sparse_grm_bin_file,".grm.bin",'')} \
+             --grm-sparse ${sub(fastgwa_sparse_grm_sp_file,".grm.sp",'')} \
              --pheno ${pheno_file} \
              --qcovar ${covar_file} \
              --threads ${threads} \
@@ -197,7 +200,7 @@ task merge_fastgwa_results {
 
         echo -e "CHR\tSNP\tPOS\tA1\tA2\tN\tAF1\tBETA\tSE\tP\tINFO" > fastgwa_${pheno_col}.fastGWA.tsv
         
-        cat ${sep=' ' fastgwa_result_file} | gzip -d | grep -v ^CHR >> fastgwa_${pheno_col}.fastGWA.tsv
+        cat ${sep=' ' fastgwa_result_file} |  grep -v ^CHR >> fastgwa_${pheno_col}.fastGWA.tsv
         
         gzip fastgwa_${pheno_col}.fastGWA.tsv
      
