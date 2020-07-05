@@ -148,10 +148,11 @@ task run_fastgwa {
 
     String pheno_col
     
-    Int? memory = 32
+    Int? memory = 64
     Int? disk = 100
-    Int? threads = 8
+    Int? threads = 2
     Int? preemptible_tries = 3
+    Int? maxRetries = 2
 
     String bgen_filename = basename(bgen_file)
 
@@ -177,6 +178,7 @@ task run_fastgwa {
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
 		preemptible: preemptible_tries
+        maxRetries: maxRetries
 	}
 
 	output {
