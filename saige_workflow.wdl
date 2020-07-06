@@ -8,11 +8,11 @@ workflow run_saige {
     File bgen_list_file
     File imputed_samples_file
     File covar_file
-    File plink_pca_eigenvec_file
+    #File plink_pca_eigenvec_file
 
     String phenoCol
     String covarColList #covar list, separated by comma
-    String covar_sampleID_colname
+    #String covar_sampleID_colname
     
 
     Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
@@ -26,15 +26,15 @@ workflow run_saige {
     }
 
   
-    call addPCs_to_covar_matrix {
-        input:
-            covar_file = covar_file, 
-            plink_pca_eigenvec_file = plink_pca_eigenvec_file,
-            phenoCol = phenoCol,
-            covar_sampleID_colname = covar_sampleID_colname, 
-            covarColList = covarColList,
-            sampleFile = imputed_samples_file
-    }
+    # call addPCs_to_covar_matrix {
+    #     input:
+    #         covar_file = covar_file, 
+    #         plink_pca_eigenvec_file = plink_pca_eigenvec_file,
+    #         phenoCol = phenoCol,
+    #         covar_sampleID_colname = covar_sampleID_colname, 
+    #         covarColList = covarColList,
+    #         sampleFile = imputed_samples_file
+    # }
     
 
     call saige_step1_fitNULL  {
@@ -42,7 +42,7 @@ workflow run_saige {
             genotype_bed = match_genotype_and_imputed_samples.matched_genotype_bed,
 	        genotype_bim = match_genotype_and_imputed_samples.matched_genotype_bim,
 	        genotype_fam = match_genotype_and_imputed_samples.matched_genotype_fam,
-	        covar_file = addPCs_to_covar_matrix.covar_file_with_pcs, 
+	        covar_file = covar_file, 
             phenoCol = phenoCol,
             covarColList = covarColList
     }
