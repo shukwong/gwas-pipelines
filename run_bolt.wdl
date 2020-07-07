@@ -79,7 +79,7 @@ task combine_bolt_results {
     }
 
     runtime {
-		docker: "quay.io/shukwong/bolt-lmm:2.3.4"
+		docker: "alpine"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
