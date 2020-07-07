@@ -268,7 +268,7 @@ ntrols\tN.Cases\tN.Controls\thomN_Allele2_cases\thetN_Allele2_cases\thomN_Allele
     }
 
     runtime {
-		docker: "alpine"
+		docker: "ubuntu:20.10"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"

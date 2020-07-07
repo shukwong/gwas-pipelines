@@ -79,7 +79,7 @@ task combine_bolt_results {
     }
 
     runtime {
-		docker: "alpine"
+		docker: "ubuntu:20.10"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"

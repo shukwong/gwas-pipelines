@@ -209,7 +209,7 @@ task merge_fastgwa_results {
 	}
 
 	runtime {
-		docker: "quay.io/shukwong/gcta:latest"
+		docker: "ubuntu:20.10"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
