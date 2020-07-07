@@ -448,3 +448,36 @@ task add_pcs_to_covar_file {
 	    File out_covar_file = "${phenotype}_model_matrix.tsv"
     }
 }
+
+task match_genotype_and_imputed_samples {
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
+    File imputed_samples_file
+
+    Int? memory = 32
+    Int? disk = 200
+    Int? threads = 32
+
+    command <<<
+        awk '{print $1"\t"$1}' ${imputed_samples_file}  > samples_plink_format.txt
+
+        /plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep samples_plink_format.txt \
+            --make-bed --out matched_genotype
+    >>>
+
+    runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		gpu: false
+	}
+
+    output {
+        File matched_genotype_bed = "matched_genotype.bed"
+        File matched_genotype_bim = "matched_genotype.bim"
+        File matched_genotype_fam = "matched_genotype.fam"
+    }
+
+}

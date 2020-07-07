@@ -58,14 +58,24 @@ workflow run_saige {
                 gmmat_model_file = saige_step1_fitNULL.gmmat_model_file,
                 variance_ratio_file = saige_step1_fitNULL.variance_ratio_file,
                 sparse_sigma_file = saige_step1_fitNULL.sparse_sigma_file
-	}
+	    }
     }
+
+    call combine_saige_results {
+        input: 
+            saige_result_files = saige_step2_SPAtests.saige_output_file,
+            pheno_col = phenoCol
+    }
+
+    output {
+        File merged_saige_file = combine_saige_results.merged_saige_file
+	}
     
 
     meta {
-	author : "Wendy Wong"
-	email : "wendy.wong@gmail.com"
-	description : "Run SAIGE"
+	     author : "Wendy Wong"
+	     email : "wendy.wong@gmail.com"
+	     description : "Run SAIGE"
     }
 
 }
@@ -235,4 +245,37 @@ task saige_step2_SPAtests {
 	output {
 		File saige_output_file = "${saige_output_file_name}.gz"
 	}
+}
+
+
+task combine_saige_results {
+
+    Array[File] saige_result_files
+    String pheno_col
+
+    Int? memory = 4
+	Int? disk = 100
+    Int? threads = 1
+    Int? preemptible_tries = 3
+
+    command {
+        echo -e "CHR\tPOS\trsid\tSNPID\tAllele1\tAllele2\tAC_Allele2\tAF_Allele2\timputationInfo\tN\tBETA\tSE\tTstat\tp.value\tp.value.NA\tIs.SPA.converge\tvarT\tvarTstar\tAF.Cases\tAF.Co
+ntrols\tN.Cases\tN.Controls\thomN_Allele2_cases\thetN_Allele2_cases\thomN_Allele2_ctrls\thetN_Allele2_ctrls" > saige_${pheno_col}_results_merged.tsv
+        
+        cat ${sep=' ' saige_result_files} | gzip -d | grep -v ^CHR >> saige_${pheno_col}_results_merged.tsv
+        
+        gzip saige_${pheno_col}_results_merged.tsv
+    }
+
+    runtime {
+		docker: "alpine"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		preemptible: preemptible_tries
+	}
+
+    output {
+        File merged_saige_file = "saige_${pheno_col}_results_merged.tsv.gz"
+    }
 }
