@@ -160,6 +160,7 @@ task saige_step1_fitNULL {
     Int? memory = 64
     Int? disk = 200
     Int? threads = 32
+    Int? preemptible_tries = 3
 
     command {
         step1_fitNULLGLMM.R     \
@@ -183,7 +184,7 @@ task saige_step1_fitNULL {
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
-		gpu: false
+		preemptible: preemptible_tries
 	}
 
     output {
@@ -212,6 +213,7 @@ task saige_step2_SPAtests {
 	Int? memory = 64
 	Int? disk = 500
     Int? threads = 64
+    Int? preemptible_tries = 3
 
 	command {
       step2_SPAtests.R \
@@ -239,7 +241,7 @@ task saige_step2_SPAtests {
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: 64
-		gpu: false
+		preemptible: preemptible_tries
 	}
 
 	output {
