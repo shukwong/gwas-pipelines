@@ -16,13 +16,13 @@ workflow bolt_lmm_workflow {
     String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
 
     #preprocess 
-    # call preprocess.match_genotype_and_imputed_samples {
-    #      input:
-    #         genotype_bed = genotype_bed,
-    #         genotype_bim = genotype_bim,
-    #         genotype_fam = genotype_fam,
-    #         imputed_samples_file = imputed_samples_file
-    # }
+    call match_genotype_and_imputed_samples {
+          input:
+             genotype_bed = genotype_bed,
+             genotype_bim = genotype_bim,
+             genotype_fam = genotype_fam,
+             imputed_samples_file = imputed_samples_file
+    }
 
     Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
 
@@ -30,12 +30,12 @@ workflow bolt_lmm_workflow {
     
         call run_bolt {
             input:
-            # genotype_bed = match_genotype_and_imputed_samples.matched_genotype_bed,
-	        # genotype_bim = match_genotype_and_imputed_samples.matched_genotype_bim,
-	        # genotype_fam = match_genotype_and_imputed_samples.matched_genotype_fam,
-            genotype_bed = genotype_bed,
-            genotype_bim = genotype_bim,
-            genotype_fam = genotype_fam,
+            genotype_bed = match_genotype_and_imputed_samples.matched_genotype_bed,
+	        genotype_bim = match_genotype_and_imputed_samples.matched_genotype_bim,
+	        genotype_fam = match_genotype_and_imputed_samples.matched_genotype_fam,
+            # genotype_bed = genotype_bed,
+            # genotype_bim = genotype_bim,
+            # genotype_fam = genotype_fam,
             pheno_file = pheno_file,
             ld_scores_file = ld_scores_file,
             genetic_map_file = genetic_map_file,
@@ -149,4 +149,38 @@ task run_bolt {
         File imputed_stats_file = "bolt_imputed_stats_${pheno_col}.gz"
         File bolt_lmm_log_file = "${pheno_col}.boltlmm.log"
 	}
+}
+
+#TODO, generate PCs and add it to the covar file
+task match_genotype_and_imputed_samples {
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
+    File imputed_samples_file
+
+    Int? memory = 32
+    Int? disk = 200
+    Int? threads = 8
+
+    command <<<
+        awk '{print $1"\t"$1}' ${imputed_samples_file}  > samples_plink_format.txt
+
+        /plink2 --bed ${genotype_bed} --bim ${genotype_bim} --fam ${genotype_fam} --keep samples_plink_format.txt \
+            --make-bed --out matched_genotype
+    >>>
+
+    runtime {
+		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		gpu: false
+	}
+
+    output {
+        File matched_genotype_bed = "matched_genotype.bed"
+        File matched_genotype_bim = "matched_genotype.bim"
+        File matched_genotype_fam = "matched_genotype.fam"
+    }
+
 }
