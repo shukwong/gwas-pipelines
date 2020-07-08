@@ -259,9 +259,10 @@ task combine_saige_results {
     Int? preemptible_tries = 3
 
     command {
-        echo -e "CHR\tPOS\trsid\tSNPID\tAllele1\tAllele2\tAC_Allele2\tAF_Allele2\timputationInfo\tN\tBETA\tSE\tTstat\tp.value\tp.value.NA\tIs.SPA.converge\tvarT\tvarTstar\tAF.Cases\tAF.Co
-ntrols\tN.Cases\tN.Controls\thomN_Allele2_cases\thetN_Allele2_cases\thomN_Allele2_ctrls\thetN_Allele2_ctrls" > saige_${pheno_col}_results_merged.tsv
+        #echo -e "CHR\tPOS\trsid\tSNPID\tAllele1\tAllele2\tAC_Allele2\tAF_Allele2\timputationInfo\tN\tBETA\tSE\tTstat\tp.value\tp.value.NA\tIs.SPA.converge\tvarT\tvarTstar\tAF.Cases\tAF.Controls\tN.Cases\tN.Controls\thomN_Allele2_cases\thetN_Allele2_cases\thomN_Allele2_ctrls\thetN_Allele2_ctrls" > saige_${pheno_col}_results_merged.tsv
         
+        zcat saige_result_files[1] | head -n1 > saige_${pheno_col}_results_merged.tsv
+
         cat ${sep=' ' saige_result_files} | gzip -d | grep -v ^CHR >> saige_${pheno_col}_results_merged.tsv
         
         gzip saige_${pheno_col}_results_merged.tsv
