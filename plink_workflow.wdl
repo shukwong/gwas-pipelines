@@ -335,8 +335,6 @@ task liftover_plink {
             --bed ${genotype_bed} --bim ${genotype_bim} \
             --fam ${genotype_fam} --extract ${liftover_mapped_ids_file} \
             --make-bed --out genotypes_updated
-            
-        cp ${liftover_mapped_new_bim_file} genotypes_updated.bim       
     }
 
     runtime {
