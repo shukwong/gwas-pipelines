@@ -479,3 +479,38 @@ task match_genotype_and_imputed_samples {
     }
 
 }
+
+task convert_gen_to_bgen {
+    Array[File] gen_files
+
+    String chrom
+    
+    Float threshold
+
+    Boolean? outputBgenOnePointTwo = true
+
+    Int? memory = 32
+    Int? disk = 200
+    Int? threads = 32
+    Int? preemptible_tries = 3
+
+    command <<<
+        cat ${sep=' ' gen_files} > ${chrom}.gen
+
+        qctool -g ${chrom}.gen  -threshold ${threshold}  -filetype gen -ofiletype \
+             ${true='bgen_v1.2' false='bgen' outputBgenOnePointTwo}  -og ${chrom}.bgen 
+    >>>
+
+    runtime {
+		docker: "quay.io/shukwong/qctool:v2.0.6"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		preemptible: "${preemptible_tries}"
+	}
+
+    output {
+        File converted_bgen_file = "${chrom}.bgen"
+    }
+
+}
