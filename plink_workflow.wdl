@@ -498,11 +498,11 @@ task convert_gen_to_bgen {
         cat ${sep=' ' gen_files} > ${chrom}.gen
 
         qctool -g ${chrom}.gen  -threshold ${threshold}  -filetype gen -ofiletype \
-             ${true='bgen_v1.2' false='bgen' outputBgenOnePointTwo}  -og ${chrom}.bgen 
+             ${true='bgen_v1.2 -bgen-bits 8' false='bgen' outputBgenOnePointTwo}  -og ${chrom}.bgen 
     >>>
 
     runtime {
-		docker: "quay.io/shukwong/qctool:v2.0.6"
+		docker: "quay.io/shukwong/qctool:v2.0.8"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
