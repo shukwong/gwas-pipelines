@@ -1,0 +1,4 @@
+variableName    excluded    variableType   na_values
+sex no  binary  0
+age 0   continuous  888
+center  no  categorical NA,na
