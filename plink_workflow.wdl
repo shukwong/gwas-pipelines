@@ -52,22 +52,13 @@ workflow run_preprocess {
             
     }
 
-    call preprocess_tasks.liftover_plink_bim {
-        input:
-    	    genotype_bed = run_ld_prune.genotype_pruned_bed,
-    	    genotype_bim = run_ld_prune.genotype_pruned_bim,
-    	    genotype_fam = run_ld_prune.genotype_pruned_fam,
-            chain_file = chain_file
-    }
-
+#TODO, make this step optional if we don't have to liftover    
     call preprocess_tasks.liftover_plink {
         input:
     	    genotype_bed = run_ld_prune.genotype_pruned_bed,
     	    genotype_bim = run_ld_prune.genotype_pruned_bim,
     	    genotype_fam = run_ld_prune.genotype_pruned_fam,
-            liftover_mapped_ids_file = liftover_plink_bim.liftover_mapped_ids_file,
-            liftover_mapped_new_bim_file = liftover_plink_bim.liftover_mapped_new_bim_file
-           
+            chain_file = chain_file
     }
 
 	Array[Array[File]] imputed_files = read_tsv(imputed_list_of_vcfs_file)

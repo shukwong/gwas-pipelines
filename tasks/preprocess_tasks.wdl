@@ -226,39 +226,8 @@ task index_bgen_file {
 	}
 }
 
+
 task liftover_plink {
-    File genotype_bed
-	File genotype_bim
-	File genotype_fam
-    File liftover_mapped_ids_file
-    File liftover_mapped_new_bim_file
-
-    Int? memory = 32
-    Int? disk = 200
-
-    command {
-        plink \
-            --bed ${genotype_bed} --bim ${genotype_bim} \
-            --fam ${genotype_fam} --extract ${liftover_mapped_ids_file} \
-            --make-bed --out genotypes_updated
-    }
-
-    runtime {
-		docker: "quay.io/h3abionet_org/py3plink"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-		gpu: false
-	}
-
-    output {
-	    File output_bed = "genotypes_updated.bed"
-        File output_bim = "genotypes_updated.bim"
-        File output_fam = "genotypes_updated.fam"
-    }
-
-}
-
-task liftover_plink_bim {
    	File genotype_bed
 	File genotype_bim
 	File genotype_fam
@@ -278,22 +247,23 @@ task liftover_plink_bim {
             | grep -v alt | grep -v ^chrX | grep -v ^chrY | sort -k1,1 -k2,2g \
             | cut -f4 >bim_as_bed.mapped.ids
 
-        grep -v ^chrUn bim_as_bed.crossmap.bed | grep -v random | grep -v alt \
-            | grep -v ^chrX | grep -v ^chrY | sort -k1,1 -k2,2g | sed 's/^chr//' \
-            | awk '{print $1"\tchr"$1":"$3":"$6":"$7"\t"$3"\t"$6"\t"$7}' > \
-            bim_as_bed.mapped.bim
+        plink \
+            --bed ${genotype_bed} --bim ${genotype_bim} \
+            --fam ${genotype_fam} --extract bim_as_bed.mapped.ids \
+            --make-bed --out genotypes_updated    
     >>>        
 
 	runtime {
-		docker: "crukcibioinformatics/crossmap"
+		docker: "quay.io/shukwong/plinkcrossmap:v1"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 		gpu: false
 	}
 
     output {
-	    File liftover_mapped_ids_file = "bim_as_bed.mapped.ids"
-        File liftover_mapped_new_bim_file = "bim_as_bed.mapped.bim"
+	    File output_bed = "genotypes_updated.bed"
+        File output_bim = "genotypes_updated.bim"
+        File output_fam = "genotypes_updated.fam"
     }
 }
 
