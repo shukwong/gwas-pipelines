@@ -9,10 +9,12 @@ workflow run_preprocess {
 
     File genotype_samples_to_keep_file
     File imputed_samples_to_keep_file
-    File imputed_list_of_vcfs_file
     File covar_file
     
-    File chain_file
+    File? chain_file
+    File? imputed_list_of_vcf_file
+    File? imputed_list_of_bgen_file
+    File? imputed_list_of_bgen_index_file
 
     call preprocess_tasks.get_cohort_samples {
         input: 
@@ -52,37 +54,49 @@ workflow run_preprocess {
             
     }
 
-#TODO, make this step optional if we don't have to liftover    
-    call preprocess_tasks.liftover_plink {
-        input:
+
+    if (defined(chain_file)) {
+
+        call preprocess_tasks.liftover_plink {
+            input:
     	    genotype_bed = run_ld_prune.genotype_pruned_bed,
     	    genotype_bim = run_ld_prune.genotype_pruned_bim,
     	    genotype_fam = run_ld_prune.genotype_pruned_fam,
-            chain_file = chain_file
+            chain_file = select_first([chain_file, "null"])
+        }
     }
 
-	Array[Array[File]] imputed_files = read_tsv(imputed_list_of_vcfs_file)
-    #Array[File] imputed_files = glob(imputed_files_dir + "/*.dose.vcf.gz")
 
-    scatter (imputed_file in imputed_files) {
-	call preprocess_tasks.vcf_to_bgen {
-	    input:
-                vcf_file = imputed_file[0],
-                samples_to_keep_file = imputed_samples_to_keep_file
-		}
-        call preprocess_tasks.index_bgen_file {
-            input:
-                bgen_file = vcf_to_bgen.out_bgen
-        }
-	}
+    if (defined(imputed_list_of_vcf_file)) {
+
+        Array[Array[File]] imputed_files = read_tsv(select_first([imputed_list_of_vcf_file,"null"]))
+
+        scatter (imputed_file in imputed_files) {
+	        call preprocess_tasks.vcf_to_bgen {
+	            input:
+                    vcf_file = imputed_file[0],
+                    samples_to_keep_file = imputed_samples_to_keep_file
+		        }
+            call preprocess_tasks.index_bgen_file {
+                input:
+                    bgen_file = vcf_to_bgen.out_bgen
+            }
+	    }
+    }
+
+    if (defined(imputed_list_of_bgen_file)) {
+        Array[File] imputed_bgen_files = read_lines(select_first([imputed_list_of_bgen_file,"null"]))
+        Array[File] imputed_bgen_index_files = read_lines(select_first([imputed_list_of_bgen_index_file,"null"]))
+    }
+
 
 	output {
-          File genotype_ready_bed = liftover_plink.output_bed
-          File genotype_ready_bim = liftover_plink.output_bim
-          File genotype_ready_fam = liftover_plink.output_fam
+          File genotype_ready_bed = select_first([liftover_plink.output_bed, run_ld_prune.genotype_pruned_bed])
+          File genotype_ready_bim = select_first([liftover_plink.output_bim, run_ld_prune.genotype_pruned_bim])
+          File genotype_ready_fam = select_first([liftover_plink.output_fam, run_ld_prune.genotype_pruned_fam])
           File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
-          Array[File] bgen_files = vcf_to_bgen.out_bgen
-          Array[File] bgen_file_indices = index_bgen_file.bgen_file_index
+          Array[File] bgen_files = select_first([vcf_to_bgen.out_bgen, imputed_bgen_files])
+          Array[File] bgen_file_indices = select_first([index_bgen_file.bgen_file_index, imputed_bgen_index_files])
  	}
     
 
@@ -91,6 +105,21 @@ workflow run_preprocess {
 		email : "wendy.wong@gmail.com"
 		description : "Preprocess Genotype files for biobank scale GWAS study."
 	}
+
+    parameter_meta {
+        genotype_bed : "plink bed file for direct genotypes"
+        genotype_bim : "plink bim file for direct genotypes"
+        genotype_fam : "plink fam file for direct genotypes"
+
+        genotype_samples_to_keep_file : "Listing the samples to be kept in the genotype file. Expected first two columns to be FID and IID."
+        imputed_samples_to_keep_file : "Listing the samples to be kept in the imputed file. Expected just one column"
+        covar_file : "File that contains phenotype and covariates information of the samples"
+    
+        chain_file : "Optional: A liftover chain file to convert the genome build of the genotype files (in Plink) to another build"
+        imputed_list_of_vcf_file : "Optional: A file that contains the file locations of imputed VCFs. They will be converted to bgen. Either this file or the list of bgen and bgen index files are required"
+        imputed_list_of_bgen_file : "Optional: A file that contains the file locations of imputed bgen files"
+        imputed_list_of_bgen_index_file : "Optional: A file that contains the file locations of imputed bgen index files. This needs to be in same order as the imputed_list_of_bgen_file. Will do it this way until the as_map() function works as expected."
+    }
 
 }
 
