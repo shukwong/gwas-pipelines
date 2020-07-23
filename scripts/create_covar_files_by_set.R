@@ -7,21 +7,16 @@
 require(tidyverse)
 require(jsonlite)
 
-if (0) {
-  args <- commandArgs(trailingOnly = TRUE)
-  if (length(args) != 3 ) {
-    stop("Arguments to combine_covars.R: \
-          create_covar_files_by_set.R covariate_tsv_file variable-info_tsv_file sample_sets_json_file" )
-  }
-  
-  covariate_tsv_file <- args[1]
-  variable_info_tsv_file <- args[2]
-  sample_sets_json_file <- args[3]
-}
 
-covariate_tsv_file="variables/sample_covars.tsv"
-variable_info_tsv_file="variables/variable-info.tsv" 
-sample_sets_json_file="variables/samples.json"
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 3 ) {
+    stop("Arguments to create_covar_files_by_set.R: \
+          create_covar_files_by_set.R covariate_tsv_file variable-info_tsv_file sample_sets_json_file" )
+}
+  
+covariate_tsv_file <- args[1]
+variable_info_tsv_file <- args[2]
+sample_sets_json_file <- args[3]
 
 covariates <- read_delim(covariate_tsv_file, delim="\t")
 variable_info <- read_delim(variable_info_tsv_file, delim="\t")
