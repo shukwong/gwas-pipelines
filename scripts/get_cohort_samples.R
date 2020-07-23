@@ -26,5 +26,5 @@ imputed_samples <- read_delim(imputed_samples_to_keep_file, delim=" ", col_names
 covariants_matched <- covariates %>% filter (!!sym(sampleID) %in% genotype_samples$X2)  %>%               
                       filter (!!sym(sampleID) %in% imputed_samples$X1 )
 
-write.table(covariants_matched, "covariants_matched.tsv", quote=F, sep=" ",
+write.table(covariants_matched, "covars_subsetted.tsv", quote=F, sep=" ",
             col.names = T, row.names = F)
