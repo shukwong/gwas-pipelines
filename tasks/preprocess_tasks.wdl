@@ -441,7 +441,7 @@ task get_cohort_samples {
     command <<<
 
         wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/get_cohort_samples.R
-        Rscript get_cohort_samples.R ${covariate_tsv_file} ${genotype_samples_to_keep_file} ${imputed_samples_to_keep_file} covars_subsetted
+        Rscript get_cohort_samples.R ${covariate_tsv_file} ${genotype_samples_to_keep_file} ${imputed_samples_to_keep_file} 
     >>>
 
     runtime {

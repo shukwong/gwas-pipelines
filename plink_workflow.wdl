@@ -9,7 +9,7 @@ workflow run_preprocess {
 
     File genotype_samples_to_keep_file
     File imputed_samples_to_keep_file
-    File covar_file
+    File covariate_tsv_file
     
     File? chain_file
     File? imputed_list_of_vcf_file
@@ -18,11 +18,12 @@ workflow run_preprocess {
 
     call preprocess_tasks.get_cohort_samples {
         input: 
-            covar_file = covar_file,
+            covariate_tsv_file = covariate_tsv_file,
             genotype_samples_to_keep_file = genotype_samples_to_keep_file,
             imputed_samples_to_keep_file = imputed_samples_to_keep_file
     }
 
+#TODO: use get_cohort_samples.covar_subset_file as input here for samples to keep
     call preprocess_tasks.plink_subset_sample {
         input:
              genotype_bed = genotype_bed, 
