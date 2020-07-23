@@ -308,6 +308,9 @@ task add_pcs_to_covar_file {
     Int? disk = 20
 
     command {
+    
+        wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/construct_model_matrix.R
+    
         Rscript construct_model_matrix.R ${covar_file} ${samples_to_keep_file} ${phenotype} ${phenotype}_model_matrix.tsv
     }
 
@@ -396,15 +399,18 @@ task get_covar_subsets {
     File covariate_tsv_file 
     File variable_info_tsv_file 
     File sample_sets_json_file
-    File create_covar_files_by_set_Rscript_file
 
     Int? memory = 4
     Int? disk = 200
     Int? threads = 1
     Int? preemptible_tries = 3
 
-    command <<<
-        Rscript ${create_covar_files_by_set_Rscript_file} ${covariate_tsv_file} ${variable_info_tsv_file} ${sample_sets_json_file}
+#TODO, change this to git clone a release version when the pipeline is finalized
+    command <<< 
+       
+        wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/create_covar_files_by_set.R
+
+        Rscript create_covar_files_by_set.R ${covariate_tsv_file} ${variable_info_tsv_file} ${sample_sets_json_file}
     >>>
 
     runtime {
@@ -423,7 +429,7 @@ task get_covar_subsets {
 }
 
 task get_cohort_samples {
-    File covar_file
+    File covariate_tsv_file
     File genotype_samples_to_keep_file
     File imputed_samples_to_keep_file
 
@@ -433,7 +439,9 @@ task get_cohort_samples {
     Int? preemptible_tries = 3
 
     command <<<
-        Rscript get_cohort_samples.R ${covar_file} ${genotype_samples_to_keep_file} ${imputed_samples_to_keep_file} covars_subsetted
+
+        wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/get_cohort_samples.R
+        Rscript get_cohort_samples.R ${covariate_tsv_file} ${genotype_samples_to_keep_file} ${imputed_samples_to_keep_file} covars_subsetted
     >>>
 
     runtime {
