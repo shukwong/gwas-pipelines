@@ -7,14 +7,14 @@ require(tidyverse)
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 3 | length(args) >4 ) {
   stop("Arguments to create_covar_files_by_set.R: \
-          get_cohort_samples.R covariate_tsv_file genotype_samples_to_keep_file imputed_samples_to_keep_file <sampleIDcol (if it's not sampleID)>" )
+          get_cohort_samples.R covariate_tsv_file genotype_samples_to_keep_file imputed_samples_to_keep_file <sampleIDcol (if it's not IID)>" )
 }
 
 covariate_tsv_file <- args[1]
 genotype_samples_to_keep_file <- args[2]
 imputed_samples_to_keep_file <- args[3]
 
-sampleID = 'sampleID'
+sampleID = 'IID'
 if (length(args)==4) {
   sampleID = args[4]
 }
@@ -26,5 +26,12 @@ imputed_samples <- read_delim(imputed_samples_to_keep_file, delim=" ", col_names
 covariants_matched <- covariates %>% filter (!!sym(sampleID) %in% genotype_samples$X2)  %>%               
                       filter (!!sym(sampleID) %in% imputed_samples$X1 )
 
+
+plink_subset_samples <- covariants_matched %>% mutate (col1 = !!sym(sampleID), col2 = !!sym(sampleID)) %>% select (col1,col2)
+
 write.table(covariants_matched, "covars_subsetted.tsv", quote=F, sep=" ",
             col.names = T, row.names = F)
+
+write.table(plink_subset_samples, "plink_subsetted.samples", quote=F, sep=" ",
+            col.names = T, row.names = F)
+

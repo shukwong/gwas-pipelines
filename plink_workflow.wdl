@@ -23,13 +23,12 @@ workflow run_preprocess {
             imputed_samples_to_keep_file = imputed_samples_to_keep_file
     }
 
-#TODO: use get_cohort_samples.covar_subset_file as input here for samples to keep
     call preprocess_tasks.plink_subset_sample {
         input:
              genotype_bed = genotype_bed, 
              genotype_bim = genotype_bim,
              genotype_fam = genotype_fam,
-             samples_to_keep_file = genotype_samples_to_keep_file
+             samples_to_keep_file = get_cohort_samples.plink_subset_samples
     }
 
     call preprocess_tasks.run_genotype_qc_filter {
