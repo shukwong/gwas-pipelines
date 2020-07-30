@@ -25,11 +25,14 @@ workflow run_assoication_test {
         input:
         covariate_tsv_file = covariate_tsv_file, 
         variable_info_tsv_file = variable_info_tsv_file, 
-        sample_sets_json_file = sample_sets_json_file
+        sample_sets_json_file = sample_sets_json_file,
+        phenoCol = phenoCol
     }
 
-    String binary_covar_list = read_lines(get_covar_subsets.binary_covar_list_file)[1]
-    String continuous_covar_list = read_lines(get_covar_subsets.continuous_covar_list_file)[1]
+    Array[String] binary_covar_list_lines  = read_lines(get_covar_subsets.binary_covar_list_file)
+    String binary_covar_list = binary_covar_list_lines[0]
+    Array[String] continuous_covar_list_lines = read_lines(get_covar_subsets.continuous_covar_list_file)
+    String continuous_covar_list = continuous_covar_list_lines[0]
 
     scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
         call preprocess.run_preprocess {
