@@ -14,7 +14,7 @@ workflow run_preprocess {
     File? chain_file
     File? imputed_list_of_vcf_file
     File? imputed_list_of_bgen_file
-    File? imputed_list_of_bgen_index_file
+    #File? imputed_list_of_bgen_index_file
 
     call preprocess_tasks.get_cohort_samples {
         input: 
@@ -66,7 +66,8 @@ workflow run_preprocess {
         }
     }
 
-
+    
+    
     if (defined(imputed_list_of_vcf_file)) {
 
         Array[Array[File]] imputed_files = read_tsv(select_first([imputed_list_of_vcf_file,"null"]))
@@ -82,21 +83,39 @@ workflow run_preprocess {
                     bgen_file = vcf_to_bgen.out_bgen
             }
 	    }
-    }
 
-    if (defined(imputed_list_of_bgen_file)) {
-        Array[File] imputed_bgen_files = read_lines(select_first([imputed_list_of_bgen_file,"null"]))
-        Array[File] imputed_bgen_index_files = read_lines(select_first([imputed_list_of_bgen_index_file,"null"]))
-    }
+        Array[Array[File]] converted_bgen_file_list = transpose([vcf_to_bgen.out_bgen,  index_bgen_file.bgen_file_index])
+        #write_tsv(converted_bgen_file_list)
+    } 
 
+    # Array[Array[File]] bgen_files_and_indices_out = if defined(imputed_list_of_bgen_file) then 
+    #     read_tsv(select_first([imputed_list_of_bgen_file,"null"])) 
+    #     else if (defined(imputed_list_of_vcf_file)) then 
+    #     transpose([vcf_to_bgen.out_bgen,  index_bgen_file.bgen_file_index]) else "null"
+
+
+    # if (defined(imputed_list_of_bgen_file)) {
+    #     #Array[File] imputed_bgen_files = read_lines(select_first([imputed_list_of_bgen_file,"null"]))
+    #     #Array[File] imputed_bgen_index_files = read_lines(select_first([imputed_list_of_bgen_index_file,"null"]))
+    #     Array[Array[File]] bgen_files_and_indices = read_tsv(select_first([imputed_list_of_bgen_file, "null"])) 
+    # } else {
+    #     Array[File] bgen_files = select_first([vcf_to_bgen.out_bgen, imputed_bgen_files])
+    #     Array[File] bgen_file_indices = select_first([index_bgen_file.bgen_file_index, imputed_bgen_index_files]) 
+    # }     
+
+    # Array[Array[File]] bgen_files_and_indices = if defined(imputed_list_of_bgen_file) then read_tsv(imputed_list_of_bgen_file)
+    # else if (imputed_list_of_vcf_file) 
 
 	output {
           File genotype_ready_bed = select_first([liftover_plink.output_bed, run_ld_prune.genotype_pruned_bed])
           File genotype_ready_bim = select_first([liftover_plink.output_bim, run_ld_prune.genotype_pruned_bim])
           File genotype_ready_fam = select_first([liftover_plink.output_fam, run_ld_prune.genotype_pruned_fam])
           File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
-          Array[File] bgen_files = select_first([vcf_to_bgen.out_bgen, imputed_bgen_files])
-          Array[File] bgen_file_indices = select_first([index_bgen_file.bgen_file_index, imputed_bgen_index_files])
+          #Array[File] bgen_files = select_first([vcf_to_bgen.out_bgen, imputed_bgen_files])
+          #Array[File] bgen_file_indices = select_first([index_bgen_file.bgen_file_index, imputed_bgen_index_files])
+          Array[Array[File]] bgen_files_and_indices = select_first([converted_bgen_file_list,read_tsv(select_first([imputed_list_of_bgen_file,"null"]))])          
+          File bgen_subset_samples = get_cohort_samples.bgen_subset_samples
+          File plink_subset_samples = get_cohort_samples.plink_subset_samples
  	}
     
 

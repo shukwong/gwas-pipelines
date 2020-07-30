@@ -29,9 +29,15 @@ covariants_matched <- covariates %>% filter (!!sym(sampleID) %in% genotype_sampl
 
 plink_subset_samples <- covariants_matched %>% mutate (col1 = !!sym(sampleID), col2 = !!sym(sampleID)) %>% select (col1,col2)
 
+bgen_subset_samples <- covariants_matched %>% pull (!!sym(sampleID)) 
+
 write.table(covariants_matched, "covars_subsetted.tsv", quote=F, sep=" ",
             col.names = T, row.names = F)
 
 write.table(plink_subset_samples, "plink_subsetted.samples", quote=F, sep=" ",
             col.names = T, row.names = F)
+
+write.table(bgen_subset_samples, "bgen_subsetted.samples", quote=F, sep=" ",
+            col.names = F, row.names = F)
+
 

@@ -2,28 +2,35 @@
 
 #sampleID column is required in covariate_tsv_file, variable info is defined in variable_info_tsv_file
 
-#TODO: variables/variable-info.tsv to transform the variables
+#TODO: variables/variable-info.tsv to transform the variables, currently phenoCol is not defined here but in the main json file
+#TODO: add transformation
 
 require(tidyverse)
 require(jsonlite)
 
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 3 ) {
+if (length(args) != 4 ) {
     stop("Arguments to create_covar_files_by_set.R: \
-          create_covar_files_by_set.R covariate_tsv_file variable-info_tsv_file sample_sets_json_file" )
+          create_covar_files_by_set.R covariate_tsv_file variable-info_tsv_file sample_sets_json_file phenoCol" )
 }
+
   
 covariate_tsv_file <- args[1]
 variable_info_tsv_file <- args[2]
 sample_sets_json_file <- args[3]
+phenoCol <- args[4]
 
 covariates <- read_delim(covariate_tsv_file, delim="\t")
 variable_info <- read_delim(variable_info_tsv_file, delim="\t")
 sample_sets <- fromJSON(sample_sets_json_file)
 
+#phenoCol = sample_sets$phenoCol
+
 #process sample sets
 for (i in 1:length(sample_sets)) {
+#  if (names(sample_sets[1]) == "phenoCol") {next}
+  
   sample_set_name = names(sample_sets)[i]
   sample_set <- sample_sets[[i]]
   covariates_current_set = covariates
@@ -82,3 +89,36 @@ for (i in 1:length(sample_sets)) {
   
       
 }
+
+
+#variable info file parse
+#phenoCol
+binary_covar_list = ""
+continuous_covar_list = ""
+
+for (i in 1:nrow(variable_info)) {
+  
+  if (variable_info$excluded[i]!="no") {next}
+  
+  if (toupper(variable_info$variableType[i])=="SAMPLEID") {
+    next
+  } else if (toupper(variable_info$variableType[i]) == "BINARY") {
+    if (binary_covar_list=="") {
+      binary_covar_list = variable_info$variableName[i]
+    }
+    else {binary_covar_list = paste0(binary_covar_list, ",", variable_info$variableName[i])}
+  } else if (variable_info$variableType[i] == "continuous") {
+    if (continuous_covar_list ==  "") {continuous_covar_list = variable_info$variableName[i]}
+    else {continuous_covar_list = paste0(continuous_covar_list, ",", variable_info$variableName[i])}  
+  } else { #implementing this as hard exit instead of try catch for now
+    stop(paste0("variable Type ", variable_info$variableType[i], " is not known, exiting..."))
+  }  
+}
+
+
+#write out the covar lists
+write_lines(binary_covar_list, "binary_covar_list.txt")
+write_lines(continuous_covar_list, "continuous_covar_list.txt")
+
+
+

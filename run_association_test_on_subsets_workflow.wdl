@@ -1,5 +1,6 @@
 import "plink_workflow.wdl" as preprocess
 import "tasks/preprocess_tasks.wdl" as preprocess_tasks
+import "tasks/saige_workflow.wdl" as saige
 
 workflow run_assoication_test {
     
@@ -9,25 +10,28 @@ workflow run_assoication_test {
 
     File genotype_samples_to_keep_file
     File imputed_samples_to_keep_file
-    File imputed_list_of_vcfs_file
-    
-    File chain_file
 
     File covariate_tsv_file
     File variable_info_tsv_file
     File sample_sets_json_file
-    File create_covar_files_by_set_Rscript_file
 
+    String phenoCol
+    
+    File? imputed_list_of_vcf_file
+    File? imputed_list_of_bgen_file
+    File? chain_file
     
     call  preprocess_tasks.get_covar_subsets {
         input:
         covariate_tsv_file = covariate_tsv_file, 
         variable_info_tsv_file = variable_info_tsv_file, 
-        sample_sets_json_file = sample_sets_json_file,
-        create_covar_files_by_set_Rscript_file = create_covar_files_by_set_Rscript_file
+        sample_sets_json_file = sample_sets_json_file
     }
 
-    scatter (covar_file in get_covar_subsets.covar_subsets_files) {
+    String binary_covar_list = read_lines(get_covar_subsets.binary_covar_list_file)[1]
+    String continuous_covar_list = read_lines(get_covar_subsets.continuous_covar_list_file)[1]
+
+    scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
         call preprocess.run_preprocess {
             input:
             genotype_bed = genotype_bed,
@@ -36,10 +40,23 @@ workflow run_assoication_test {
 
             genotype_samples_to_keep_file = genotype_samples_to_keep_file,
             imputed_samples_to_keep_file = imputed_samples_to_keep_file,
-            imputed_list_of_vcfs_file = imputed_list_of_vcfs_file,
-            covar_file = covar_file,
-    
+            #imputed_list_of_vcf_file = imputed_list_of_vcf_file,
+            imputed_list_of_bgen_file = imputed_list_of_bgen_file,
+            covariate_tsv_file = covar_subset_file,
             chain_file = chain_file
+        }
+
+        call saige.run_saige {
+            input:
+                genotype_bed = run_preprocess.genotype_ready_bed,
+                genotype_bim = run_preprocess.genotype_ready_bim,
+                genotype_fam = run_preprocess.genotype_ready_fam,
+                bgen_file_list = run_preprocess.bgen_files_and_indices,
+                imputed_samples_file = run_preprocess.bgen_subset_samples,
+                phenoCol = phenoCol,
+                covar_file = covar_subset_file,
+                covarColList = binary_covar_list + "," + continuous_covar_list
+
         }
     }
 
@@ -47,6 +64,7 @@ workflow run_assoication_test {
         Array[File] genotype_ready_bed = run_preprocess.genotype_ready_bed
         Array[File] genotype_ready_bim = run_preprocess.genotype_ready_bim
         Array[File] genotype_ready_fam = run_preprocess.genotype_ready_fam
+        Array[File] merged_saige_file = run_saige.merged_saige_file
  	}
     
 
