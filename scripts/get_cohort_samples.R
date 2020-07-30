@@ -19,15 +19,15 @@ if (length(args)==4) {
   sampleID = args[4]
 }
 
-covariates <- read_delim(covariate_tsv_file, delim=" ")
-genotype_samples <- read_delim(genotype_samples_to_keep_file, delim=" ", col_names = F)
-imputed_samples <- read_delim(imputed_samples_to_keep_file, delim=" ", col_names = F)
+covariates <- read_table2(covariate_tsv_file)
+genotype_samples <- read_table2(genotype_samples_to_keep_file, col_names = F)
+imputed_samples <- read_table2(imputed_samples_to_keep_file, col_names = F)
 
 covariants_matched <- covariates %>% filter (!!sym(sampleID) %in% genotype_samples$X2)  %>%               
                       filter (!!sym(sampleID) %in% imputed_samples$X1 )
 
 
-plink_subset_samples <- covariants_matched %>% mutate (col1 = !!sym(sampleID), col2 = !!sym(sampleID)) %>% select (col1,col2)
+plink_subset_samples <- covariants_matched %>% mutate (FID = !!sym(sampleID), IID = !!sym(sampleID)) %>% select (FID,IID)
 
 bgen_subset_samples <- covariants_matched %>% pull (!!sym(sampleID)) 
 
