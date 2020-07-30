@@ -21,9 +21,13 @@ variable_info_tsv_file <- args[2]
 sample_sets_json_file <- args[3]
 phenoCol <- args[4]
 
-covariates <- read_delim(covariate_tsv_file, delim="\t")
-variable_info <- read_delim(variable_info_tsv_file, delim="\t")
+covariates <- read_table2(covariate_tsv_file)
+variable_info <- read_table2(variable_info_tsv_file)
 sample_sets <- fromJSON(sample_sets_json_file)
+
+if (ncol(variable_info)!=5) {
+  stop ("Error: expecting column names variableName,excluded,variableType,na_values,transformation for the variable-info file\n" )
+}
 
 #phenoCol = sample_sets$phenoCol
 
@@ -37,7 +41,7 @@ for (i in 1:length(sample_sets)) {
   
   #start the log file
   covar_set_log <- paste0(sample_set_name, ".log")
-  write_lines(paste0("Full covar file has ", nrow(covariates_current_set), "samples."),      
+  write_lines(paste0("Full covar file has ", nrow(covariates_current_set), " samples."),      
              covar_set_log)
   
   #filter on other criteria, use a for loop for now
@@ -98,7 +102,7 @@ continuous_covar_list = ""
 
 for (i in 1:nrow(variable_info)) {
   
-  if (variable_info$excluded[i]!="no") {next}
+  if (variable_info$excluded[i]!="no") {next} else if (variable_info$variableName[i]==phenoCol) {next}
   
   if (toupper(variable_info$variableType[i])=="SAMPLEID") {
     next
