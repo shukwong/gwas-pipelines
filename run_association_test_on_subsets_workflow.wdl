@@ -1,3 +1,5 @@
+version development
+
 import "plink_workflow.wdl" as preprocess
 import "tasks/preprocess_tasks.wdl" as preprocess_tasks
 import "tasks/saige_workflow.wdl" as saige

@@ -174,55 +174,38 @@ task vcf_to_bgen {
     
 
 	command <<<
-        /plink2 --memory ${memory_in_MB} --vcf ${vcf_file} dosage=HDS --id-delim _ \
+        set -euo pipefail
+
+        plink2 --memory ${memory_in_MB} --vcf ${vcf_file} dosage=HDS --id-delim _ \
             --make-pgen erase-phase --out plink_out
 
-        /plink2 --memory ${memory_in_MB} --pfile plink_out --keep ${samples_to_keep_file} \
+        plink2 --memory ${memory_in_MB} --pfile plink_out --keep ${samples_to_keep_file} \
             --export bgen-1.2 bits=${bits} --out ${prefix}
+
+        bgenix -g ${prefix}.bgen -index -clobber
 
         ## mysterious file format discrepancy causes failures with FASTGWA; change NA values to 0 in sample files
         sed 's/NA$/0/' ${prefix}.sample > ${prefix}-noNAs.sample    
 
         awk 'NR > 2 {print $1}' ${prefix}-noNAs.sample  > ${prefix}_bgen._saige.sample #samples file for saige
+
+        echo "~{prefix}.bgen ~{prefix}.bgen.bgi" >bgen_file_paths.txt 
 	>>>
 
 	runtime {
-		docker: "quay.io/large-scale-gxe-methods/genotype-conversion"
+		docker: "quay.io/shukwong/plink_crossmap_bgen:8984373caf8b"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 		gpu: false
 	}
 
 	output {
-		File out_bgen = "${prefix}.bgen"
-		File out_bgen_sample = "${prefix}-noNAs.sample"
-		File out_bgen_log = "${prefix}.log"
-        File out_bgen_saige_sample = "${prefix}_bgen._saige.sample"
-	}
-}
-
-task index_bgen_file {
-    File bgen_file
-
-    String bgen_filename = basename(bgen_file)	
-
-    Int? memory = 60
-    Int? disk = 100
-
-    command {
-        bgenix -g ${bgen_file} -index -clobber
-	mv ${bgen_file}.bgi ./
-    }
-
-    output {
-        File bgen_file_index = "${bgen_filename}.bgi"
-    }
-
-    runtime {
-		docker: "quay.io/shukwong/bgen:fe6d17aa6933"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-		gpu: false
+		File bgen_file = "${prefix}.bgen"
+        File bgen_file_index = "${prefix}.bgen.bgi"
+		File bgen_file_sample = "${prefix}-noNAs.sample"
+		File bgen_file_log = "${prefix}.log"
+        File bgen_file_saige_sample = "${prefix}_bgen._saige.sample"
+        File bgen_file_paths = "bgen_file_paths.txt"
 	}
 }
 
@@ -399,6 +382,7 @@ task get_covar_subsets {
     File covariate_tsv_file 
     File variable_info_tsv_file 
     File sample_sets_json_file
+    String phenoCol
 
     Int? memory = 4
     Int? disk = 200
@@ -410,7 +394,7 @@ task get_covar_subsets {
        
         wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/create_covar_files_by_set.R
 
-        Rscript create_covar_files_by_set.R ${covariate_tsv_file} ${variable_info_tsv_file} ${sample_sets_json_file}
+        Rscript create_covar_files_by_set.R ${covariate_tsv_file} ${variable_info_tsv_file} ${sample_sets_json_file} ${phenoCol}
     >>>
 
     runtime {
@@ -424,6 +408,8 @@ task get_covar_subsets {
     output {
         Array[File] covar_subsets_files = glob("covars*.tsv")
         Array[File] covar_subsets_log_files = glob("*.log")
+        File binary_covar_list_file = "binary_covar_list.txt"
+        File continuous_covar_list_file = "continuous_covar_list.txt"
     }
 
 }
@@ -441,6 +427,7 @@ task get_cohort_samples {
     command <<<
 
         wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/get_cohort_samples.R
+
         Rscript get_cohort_samples.R ${covariate_tsv_file} ${genotype_samples_to_keep_file} ${imputed_samples_to_keep_file} 
     >>>
 
@@ -454,6 +441,35 @@ task get_cohort_samples {
 
     output {
         File covar_subset_file = "covars_subsetted.tsv"
-        File plink_subset_samples= "plink_subsetted.samples"
+        File plink_subset_samples = "plink_subsetted.samples"
+        File bgen_subset_samples = "bgen_subsetted.samples"
+    }
+}
+
+#till I find a more elegant solution...
+task cat_file {
+    Array [File] files
+
+    Int? memory = 2
+    Int? disk = 10
+    Int? threads = 1
+    Int? preemptible_tries = 3
+
+    command <<<
+
+        cat ${sep=' ' files} >concat_file.txt
+
+    >>>
+
+    runtime {
+		docker: "ubuntu:18.04"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		preemptible: "${preemptible_tries}"
+	}
+
+    output {
+        File merged_file = "concat_file.txt"
     }
 }
