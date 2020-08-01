@@ -24,7 +24,7 @@ pcs <- pcs %>% select (-`#FID`) %>% rename (!!covar_file_id_colname := IID)
 
 
 covar_with_PCs <- covars_data %>% 
-            inner_join(pcs, by=(!!covar_file_id_colname)) 
+            inner_join(pcs, by=covar_file_id_colname)
 
 
 ## subset to complete cases, which are all that are used by SAIGE
