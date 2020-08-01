@@ -1,15 +1,14 @@
 require(tidyverse)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 4 ) {
+if (length(args) != 3 ) {
    stop("Arguments to combine_covars.R: \
-     covar_filename pc_filename  covar_file_id_colname output_filename" )
+     covar_filename pc_filename  covar_file_id_colname" )
 }
 
 covar_filename <- args[1]
 pc_filename <- args[2] 
 covar_file_id_colname <- args[3]
-output_filename <- args[4]
 
      
 ## try to read phenotype data
@@ -32,4 +31,4 @@ covar_with_PCs <- covars_data %>%
 #covar_with_PCs <- covar_with_PCs[complete.cases(covar_with_PCs),]
 
 #uoutput
-write.table(covar_with_PCs, output_filename, row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
+write.table(covar_with_PCs, "covar_with_pcs.tsv", row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
