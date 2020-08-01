@@ -14,9 +14,9 @@ workflow run_saige {
     String covarColList #covar list, separated by comma
     #String covar_sampleID_colname
     
-    Array[Array[File]] bgen_file_list 
+    File bgen_paths_file 
 
-    #Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
+    Array[Array[String]] bgen_file_list = read_tsv(bgen_paths_file)
 
     call match_genotype_and_imputed_samples {
         input:
@@ -25,18 +25,6 @@ workflow run_saige {
             genotype_fam = genotype_fam,
             imputed_samples_file = imputed_samples_file
     }
-
-  
-    # call addPCs_to_covar_matrix {
-    #     input:
-    #         covar_file = covar_file, 
-    #         plink_pca_eigenvec_file = plink_pca_eigenvec_file,
-    #         phenoCol = phenoCol,
-    #         covar_sampleID_colname = covar_sampleID_colname, 
-    #         covarColList = covarColList,
-    #         sampleFile = imputed_samples_file
-    # }
-    
 
     call saige_step1_fitNULL  {
         input:
@@ -50,12 +38,12 @@ workflow run_saige {
 
     scatter (bgen_file_line in bgen_file_list) {
 
-	call saige_step2_SPAtests {
-	   input:
+	    call saige_step2_SPAtests {
+	        input:
                 bgen_file = bgen_file_line[0],
                 bgen_file_index = bgen_file_line[1],
                 imputed_samples_file = imputed_samples_file,
-                chrom = bgen_file_line[2],
+                #chrom = bgen_file_line[2],
                 gmmat_model_file = saige_step1_fitNULL.gmmat_model_file,
                 variance_ratio_file = saige_step1_fitNULL.variance_ratio_file,
                 sparse_sigma_file = saige_step1_fitNULL.sparse_sigma_file
@@ -206,10 +194,10 @@ task saige_step2_SPAtests {
     File variance_ratio_file
     File sparse_sigma_file
 
-    String chrom 
-
     String file_prefix = basename(bgen_file, ".bgen") 
-    String saige_output_file_name = file_prefix + "." + chrom + ".txt"
+
+    String? chrom 
+    String saige_output_file_name = if defined (chrom) then file_prefix + "." + chrom + ".txt" else file_prefix + ".txt"
 
 	Int? memory = 64
 	Int? disk = 500
@@ -223,7 +211,6 @@ task saige_step2_SPAtests {
         --IsDropMissingDosages=FALSE \
         --minMAF=0.01 \
         --minMAC=1 \
-        --chrom=${chrom} \
         --sampleFile=${imputed_samples_file} \
         --GMMATmodelFile=${gmmat_model_file} \
         --varianceRatioFile=${variance_ratio_file} \
@@ -234,6 +221,7 @@ task saige_step2_SPAtests {
         --IsOutputHetHomCountsinCaseCtrl=TRUE \
         --IsOutputAFinCaseCtrl=TRUE
 
+#--chrom=${chrom} \
         gzip ${saige_output_file_name}
 	}
 

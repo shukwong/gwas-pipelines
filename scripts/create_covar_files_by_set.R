@@ -1,6 +1,6 @@
 #This script takes in the files specified by the user and creates different sets of covar files for different runs
 
-#sampleID column is required in covariate_tsv_file, variable info is defined in variable_info_tsv_file
+#variable info is defined in variable_info_tsv_file
 
 #TODO: variables/variable-info.tsv to transform the variables, currently phenoCol is not defined here but in the main json file
 #TODO: add transformation
@@ -10,9 +10,9 @@ require(jsonlite)
 
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 4 ) {
+if (length(args) < 4 ) {
     stop("Arguments to create_covar_files_by_set.R: \
-          create_covar_files_by_set.R covariate_tsv_file variable-info_tsv_file sample_sets_json_file phenoCol" )
+          create_covar_files_by_set.R covariate_tsv_file variable-info_tsv_file sample_sets_json_file phenoCol <sampleID>" )
 }
 
   
@@ -25,15 +25,52 @@ covariates <- read_table2(covariate_tsv_file)
 variable_info <- read_table2(variable_info_tsv_file)
 sample_sets <- fromJSON(sample_sets_json_file)
 
-if (ncol(variable_info)!=5) {
-  stop ("Error: expecting column names variableName,excluded,variableType,na_values,transformation for the variable-info file\n" )
+sampleID = 'IID'
+if (length(args)==5) {
+  sampleID = args[5]
 }
 
-#phenoCol = sample_sets$phenoCol
+
+#variable info file parse
+#phenoCol
+binary_covar_string = ""
+continuous_covar_string = ""
+binary_covar_list = vector()
+continuous_covar_list = vector()
+
+for (i in 1:nrow(variable_info)) {
+  
+  if (variable_info$excluded[i]!="no") {next} else if (variable_info$variableName[i]==phenoCol) {next}
+  
+  if (toupper(variable_info$variableType[i])=="SAMPLEID") {
+    next
+  } else if (toupper(variable_info$variableType[i]) == "BINARY") {
+    binary_covar_list <- c(binary_covar_list, variable_info$variableName[i])
+    if (binary_covar_string=="") {
+       binary_covar_string = variable_info$variableName[i]
+    }
+    else {
+      binary_covar_string = paste0(binary_covar_string, ",", variable_info$variableName[i])
+    }
+  } else if (variable_info$variableType[i] == "continuous") {
+    continuous_covar_list = c(continuous_covar_list, variable_info$variableName[i])
+    if (continuous_covar_string ==  "") {continuous_covar_string = variable_info$variableName[i]}
+    else {
+      continuous_covar_string = paste0(continuous_covar_string, ",", variable_info$variableName[i])
+    }  
+  } else { #implementing this as hard exit instead of try catch for now
+    stop(paste0("variable Type ", variable_info$variableType[i], " is not known, exiting..."))
+  }  
+}
+
+
+#write out the covar lists
+write_lines(binary_covar_string, "binary_covar_list.txt")
+write_lines(continuous_covar_string, "continuous_covar_list.txt")
 
 #process sample sets
 for (i in 1:length(sample_sets)) {
-#  if (names(sample_sets[1]) == "phenoCol") {next}
+  if (names(sample_sets[1]) == "phenoCol") {next}
   
   sample_set_name = names(sample_sets)[i]
   sample_set <- sample_sets[[i]]
@@ -85,44 +122,21 @@ for (i in 1:length(sample_sets)) {
       stop (paste0 ("Criteria ", criteria, " is not recognized."))
     }
     
-    #output the file
-    outfile_name <- paste0("covars_", sample_set_name, ".tsv")
-    write.table(covariates_current_set, outfile_name, col.names = T,
-                row.names = F, quote=FALSE, sep="\t")
+    
   }
   
+  #get complete cases
+  covariates_current_set <- covariates_current_set %>% select(c(!!sym(sampleID), !!sym(phenoCol), all_of(binary_covar_list), all_of(continuous_covar_list)))
+  covariates_current_set <- covariates_current_set[complete.cases(covariates_current_set),]
+  
+  #output the file
+  outfile_name <- paste0("covars_", sample_set_name, ".tsv")
+  write.table(covariates_current_set, outfile_name, col.names = T,
+              row.names = F, quote=FALSE, sep="\t")
       
 }
 
 
-#variable info file parse
-#phenoCol
-binary_covar_list = ""
-continuous_covar_list = ""
-
-for (i in 1:nrow(variable_info)) {
-  
-  if (variable_info$excluded[i]!="no") {next} else if (variable_info$variableName[i]==phenoCol) {next}
-  
-  if (toupper(variable_info$variableType[i])=="SAMPLEID") {
-    next
-  } else if (toupper(variable_info$variableType[i]) == "BINARY") {
-    if (binary_covar_list=="") {
-      binary_covar_list = variable_info$variableName[i]
-    }
-    else {binary_covar_list = paste0(binary_covar_list, ",", variable_info$variableName[i])}
-  } else if (variable_info$variableType[i] == "continuous") {
-    if (continuous_covar_list ==  "") {continuous_covar_list = variable_info$variableName[i]}
-    else {continuous_covar_list = paste0(continuous_covar_list, ",", variable_info$variableName[i])}  
-  } else { #implementing this as hard exit instead of try catch for now
-    stop(paste0("variable Type ", variable_info$variableType[i], " is not known, exiting..."))
-  }  
-}
-
-
-#write out the covar lists
-write_lines(binary_covar_list, "binary_covar_list.txt")
-write_lines(continuous_covar_list, "continuous_covar_list.txt")
 
 
 

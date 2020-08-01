@@ -6,8 +6,8 @@ require(tidyverse)
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 3 | length(args) >4 ) {
-  stop("Arguments to create_covar_files_by_set.R: \
-          get_cohort_samples.R covariate_tsv_file genotype_samples_to_keep_file imputed_samples_to_keep_file <sampleIDcol (if it's not IID)>" )
+  stop("Arguments to get_cohort_sample.R: \
+        covariate_tsv_file genotype_samples_to_keep_file imputed_samples_to_keep_file <sampleIDcol (if it's not IID)>" )
 }
 
 covariate_tsv_file <- args[1]

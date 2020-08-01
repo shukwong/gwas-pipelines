@@ -1,5 +1,3 @@
-version development
-
 import "plink_workflow.wdl" as preprocess
 import "tasks/preprocess_tasks.wdl" as preprocess_tasks
 import "tasks/saige_workflow.wdl" as saige
@@ -56,10 +54,10 @@ workflow run_assoication_test {
                 genotype_bed = run_preprocess.genotype_ready_bed,
                 genotype_bim = run_preprocess.genotype_ready_bim,
                 genotype_fam = run_preprocess.genotype_ready_fam,
-                bgen_file_list = run_preprocess.bgen_files_and_indices,
-                imputed_samples_file = run_preprocess.bgen_subset_samples,
+                bgen_paths_file = run_preprocess.bgen_paths_file,
+                imputed_samples_file = imputed_samples_to_keep_file,
                 phenoCol = phenoCol,
-                covar_file = covar_subset_file,
+                covar_file = run_preprocess.covar_subset_file,
                 covarColList = binary_covar_list + "," + continuous_covar_list
 
         }

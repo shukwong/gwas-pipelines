@@ -189,7 +189,7 @@ task vcf_to_bgen {
 
         awk 'NR > 2 {print $1}' ${prefix}-noNAs.sample  > ${prefix}_bgen._saige.sample #samples file for saige
 
-        echo "~{prefix}.bgen ~{prefix}.bgen.bgi" >bgen_file_paths.txt 
+        echo -e "~{prefix}.bgen\t~{prefix}.bgen.bgi" >bgen_file_paths.txt 
 	>>>
 
 	runtime {
@@ -471,5 +471,32 @@ task cat_file {
 
     output {
         File merged_file = "concat_file.txt"
+    }
+}
+
+task addPCs_to_covar_matrix {
+    File covar_file 
+    File plink_pca_eigenvec_file
+    String covar_sampleID_colname
+
+    Int? memory = 8
+    Int? disk = 20
+    Int? threads = 1
+
+    command {
+        Rscript combine_covars.R ${covar_file} ${plink_pca_eigenvec_file} \
+            ${covar_sampleID_colname} pcs_${covar_file} 
+    }
+
+    runtime {
+		docker: "rocker/tidyverse:3.6.3"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		gpu: false
+	}
+
+    output {
+        File covar_file_with_pcs =  "pcs_${covar_file}"
     }
 }
