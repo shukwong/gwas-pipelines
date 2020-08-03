@@ -20,11 +20,12 @@ if (length(unique(colnames(covars_data))) != length(colnames(covars_data))) {
 
 ## read PC file, we assume this came from plink
 pcs <- read_delim(pc_filename, col_names=TRUE, delim="\t") 
-pcs <- pcs %>% select (-`#FID`) %>% rename (!!covar_file_id_colname := IID)
+pcs <- pcs %>% rename (FID=`#FID`, !!covar_file_id_colname := IID)
 
 
 covar_with_PCs <- covars_data %>% 
-            inner_join(pcs, by=covar_file_id_colname)
+            inner_join(pcs, by=covar_file_id_colname) %>%
+            select(FID, everything())
 
 
 ## subset to complete cases, which are all that are used by SAIGE
