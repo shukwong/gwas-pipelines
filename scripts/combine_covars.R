@@ -28,8 +28,9 @@ covar_with_PCs <- covars_data %>%
             select(FID, everything())
 
 
-## subset to complete cases, which are all that are used by SAIGE
-#covar_with_PCs <- covar_with_PCs[complete.cases(covar_with_PCs),]
+#get PCs as string 
+pcs_as_string <-  glue::glue_collapse(colnames(pcs)[grep("^PC",(colnames(pcs)))], ",")
 
-#uoutput
+#output
 write.table(covar_with_PCs, "covar_with_pcs.tsv", row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
+writeLines(pcs_as_string, "pcs_as_string.txt")
