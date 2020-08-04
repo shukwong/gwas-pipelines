@@ -1,7 +1,12 @@
-import "plink_workflow.wdl" as preprocess
-import "tasks/preprocess_tasks.wdl" as preprocess_tasks
-import "tasks/saige_workflow.wdl" as saige
-import "tasks/bolt_workflow.wdl" as bolt
+import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/plink_workflow.wdl" as preprocess
+import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/preprocess_tasks.wdl" as preprocess_tasks
+import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/saige_workflow.wdl" as saige
+import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/bolt_workflow.wdl" as bolt
+
+#import "plink_workflow.wdl" as preprocess
+#import "tasks/preprocess_tasks.wdl" as preprocess_tasks
+#import "tasks/saige_workflow.wdl" as saige
+#import "tasks/bolt_workflow.wdl" as bolt
 
 workflow run_association_test {
     

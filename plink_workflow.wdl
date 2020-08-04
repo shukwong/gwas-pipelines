@@ -1,5 +1,6 @@
+import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/preprocess_tasks.wdl" as preprocess_tasks
 
-import "tasks/preprocess_tasks.wdl" as preprocess_tasks
+#import "tasks/preprocess_tasks.wdl" as preprocess_tasks
 
 workflow run_preprocess {
     
@@ -10,6 +11,8 @@ workflow run_preprocess {
     File genotype_samples_to_keep_file
     File imputed_samples_to_keep_file
     File covariate_tsv_file
+
+    String covar_sampleID_colname
     
     File? chain_file
     File? imputed_list_of_vcf_file
@@ -54,11 +57,11 @@ workflow run_preprocess {
             
     }
 
-    call addPCs_to_covar_matrix {
+    call preprocess_tasks.addPCs_to_covar_matrix {
          input:
-             covar_file = covar_file, 
-             plink_pca_eigenvec_file = plink_pca_eigenvec_file,
-             covar_sampleID_colname = covar_sampleID_colname, 
+             covar_file = covariate_tsv_file, 
+             plink_pca_eigenvec_file = plink_pca.genotype_pruned_pca_eigenvec,
+             covar_sampleID_colname = covar_sampleID_colname
     }
     
 
@@ -99,14 +102,15 @@ workflow run_preprocess {
           File genotype_ready_bed = select_first([liftover_plink.output_bed, run_ld_prune.genotype_pruned_bed])
           File genotype_ready_bim = select_first([liftover_plink.output_bim, run_ld_prune.genotype_pruned_bim])
           File genotype_ready_fam = select_first([liftover_plink.output_fam, run_ld_prune.genotype_pruned_fam])
-          File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
+          #File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
           #Array[File] bgen_files = select_first([vcf_to_bgen.out_bgen, imputed_bgen_files])
           #Array[File] bgen_file_indices = select_first([index_bgen_file.bgen_file_index, imputed_bgen_index_files])
           #Array[Array[File]] bgen_files_and_indices = select_first([converted_bgen_file_list,read_tsv(select_first([imputed_list_of_bgen_file,"null"]))])          
           File bgen_paths_file = select_first([imputed_list_of_bgen_file,cat_file.merged_file])
           File bgen_subset_samples = get_cohort_samples.bgen_subset_samples
           File plink_subset_samples = get_cohort_samples.plink_subset_samples
-          File covar_file_with_pcs = addPCs_to_covar_matrix.covar_file_with_pcs
+          File covar_file = addPCs_to_covar_matrix.covar_file_with_pcs
+          File pcs_as_string_file = addPCs_to_covar_matrix.pcs_as_string_file
  	}
     
 
