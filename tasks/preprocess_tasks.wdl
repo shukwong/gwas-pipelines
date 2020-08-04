@@ -22,8 +22,8 @@ task plink_pca {
 	}
 
     output {
-	File genotype_pruned_pca_eigenvec = "genotype_pruned_pca.eigenvec"
-	File genotype_pruned_pca_eigenval = "genotype_pruned_pca.eigenval"
+	    File genotype_pruned_pca_eigenvec = "genotype_pruned_pca.eigenvec"
+	    File genotype_pruned_pca_eigenval = "genotype_pruned_pca.eigenval"
         File genotype_pruned_pca_log = "genotype_pruned_pca.log"
     }
 }
@@ -280,34 +280,34 @@ task plink_subset_sample {
     }
 }
 
-task add_pcs_to_covar_file {
-    File eigenvec_file
-    File covar_file
-    File samples_to_keep_file
+# task add_pcs_to_covar_file {
+#     File eigenvec_file
+#     File covar_file
+#     File samples_to_keep_file
    
-    String  phenotype 
+#     String  phenotype 
 
-    Int? memory = 32
-    Int? disk = 20
+#     Int? memory = 32
+#     Int? disk = 20
 
-    command {
+#     command {
     
-        wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/construct_model_matrix.R
+#         wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/construct_model_matrix.R
     
-        Rscript construct_model_matrix.R ${covar_file} ${samples_to_keep_file} ${phenotype} ${phenotype}_model_matrix.tsv
-    }
+#         Rscript construct_model_matrix.R ${covar_file} ${samples_to_keep_file} ${phenotype} ${phenotype}_model_matrix.tsv
+#     }
 
-    runtime {
-		docker: "rocker/tidyverse:3.6.3-ubuntu18.04"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-		gpu: false
-	}
+#     runtime {
+# 		docker: "rocker/tidyverse:3.6.3-ubuntu18.04"
+# 		memory: "${memory} GB"
+# 		disks: "local-disk ${disk} HDD"
+# 		gpu: false
+# 	}
 
-    output {
-	    File out_covar_file = "${phenotype}_model_matrix.tsv"
-    }
-}
+#     output {
+# 	    File out_covar_file = "${phenotype}_model_matrix.tsv"
+#     }
+# }
 
 task match_genotype_and_imputed_samples {
     File genotype_bed
@@ -484,8 +484,10 @@ task addPCs_to_covar_matrix {
     Int? threads = 1
 
     command {
+        wget https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/scripts/combine_covars.R
+
         Rscript combine_covars.R ${covar_file} ${plink_pca_eigenvec_file} \
-            ${covar_sampleID_colname} pcs_${covar_file} 
+            ${covar_sampleID_colname}
     }
 
     runtime {
@@ -497,6 +499,7 @@ task addPCs_to_covar_matrix {
 	}
 
     output {
-        File covar_file_with_pcs =  "pcs_${covar_file}"
+        File covar_file_with_pcs =  "covar_with_pcs.tsv"
+        File pcs_as_string_file = "pcs_as_string.txt"
     }
 }

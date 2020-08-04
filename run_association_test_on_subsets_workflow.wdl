@@ -1,8 +1,9 @@
 import "plink_workflow.wdl" as preprocess
 import "tasks/preprocess_tasks.wdl" as preprocess_tasks
 import "tasks/saige_workflow.wdl" as saige
+import "tasks/bolt_workflow.wdl" as bolt
 
-workflow run_assoication_test {
+workflow run_association_test {
     
     File genotype_bed
     File genotype_bim
@@ -16,6 +17,11 @@ workflow run_assoication_test {
     File sample_sets_json_file
 
     String phenoCol
+    String covar_sampleID_colname
+
+    #for bolt
+    File genetic_map_file
+    File ld_scores_file
     
     File? imputed_list_of_vcf_file
     File? imputed_list_of_bgen_file
@@ -46,20 +52,39 @@ workflow run_assoication_test {
             #imputed_list_of_vcf_file = imputed_list_of_vcf_file,
             imputed_list_of_bgen_file = imputed_list_of_bgen_file,
             covariate_tsv_file = covar_subset_file,
-            chain_file = chain_file
+            chain_file = chain_file,
+            covar_sampleID_colname = covar_sampleID_colname
         }
 
-        call saige.run_saige {
-            input:
-                genotype_bed = run_preprocess.genotype_ready_bed,
-                genotype_bim = run_preprocess.genotype_ready_bim,
-                genotype_fam = run_preprocess.genotype_ready_fam,
-                bgen_paths_file = run_preprocess.bgen_paths_file,
-                imputed_samples_file = imputed_samples_to_keep_file,
-                phenoCol = phenoCol,
-                covar_file = run_preprocess.covar_subset_file,
-                covarColList = binary_covar_list + "," + continuous_covar_list
+        Array[String] pcs_as_string_lines = read_lines(run_preprocess.pcs_as_string_file)
+        String pcs_as_string = pcs_as_string_lines[0]
 
+        # call saige.run_saige {
+        #     input:
+        #         genotype_bed = run_preprocess.genotype_ready_bed,
+        #         genotype_bim = run_preprocess.genotype_ready_bim,
+        #         genotype_fam = run_preprocess.genotype_ready_fam,
+        #         bgen_paths_file = run_preprocess.bgen_paths_file,
+        #         imputed_samples_file = imputed_samples_to_keep_file,
+        #         phenoCol = phenoCol,
+        #         covar_file = run_preprocess.covar_file,
+        #         covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string
+
+        # }
+
+        call bolt.bolt_workflow {
+            input: 
+                genotype_bed = run_preprocess.genotype_ready_bed,
+	            genotype_bim = run_preprocess.genotype_ready_bim,
+	            genotype_fam = run_preprocess.genotype_ready_fam,
+                pheno_file = run_preprocess.covar_file,
+                ld_scores_file = ld_scores_file,
+                genetic_map_file = genetic_map_file,
+                imputed_samples_file = imputed_samples_to_keep_file,
+                covar_file = run_preprocess.covar_file,
+                bgen_list_file = run_preprocess.bgen_paths_file,
+                pheno_col = phenoCol,
+                qCovarCol = continuous_covar_list + "," + pcs_as_string
         }
     }
 
@@ -67,7 +92,7 @@ workflow run_assoication_test {
         Array[File] genotype_ready_bed = run_preprocess.genotype_ready_bed
         Array[File] genotype_ready_bim = run_preprocess.genotype_ready_bim
         Array[File] genotype_ready_fam = run_preprocess.genotype_ready_fam
-        Array[File] merged_saige_file = run_saige.merged_saige_file
+        #Array[File] merged_saige_file = run_saige.merged_saige_file
  	}
     
 
