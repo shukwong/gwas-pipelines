@@ -29,7 +29,7 @@ covar_with_PCs <- covars_data %>%
 
 
 #get PCs as string 
-pcs_as_string <-  glue::glue_collapse(colnames(pcs)[grep("^PC",(colnames(pcs)))], "\t")
+pcs_as_string <-  glue::glue_collapse(colnames(pcs)[grep("^PC",(colnames(pcs)))], ",")
 
 #output
 write.table(covar_with_PCs, "covar_with_pcs.tsv", row.names=FALSE, col.names=TRUE, quote=FALSE, sep="\t")
