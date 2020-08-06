@@ -100,7 +100,7 @@ task run_ld_prune {
 	}
 
     output {
-	File genotype_pruned_bed = "genotype_pruned_plink.bed"
+	    File genotype_pruned_bed = "genotype_pruned_plink.bed"
         File genotype_pruned_bim = "genotype_pruned_plink.bim"
         File genotype_pruned_fam = "genotype_pruned_plink.fam"
         File genotype_nohet_autosomes_bed = "genotype.nohet.autosomes.bed"
@@ -173,8 +173,8 @@ task vcf_to_bgen {
     Int? memory_in_MB = 24000
     Int? disk = 100
 
-    String prefix = basename(vcf_file, ".vcf.gz")
-    prefix = basename(prefix, ".vcf")
+    String prefix1 = basename(vcf_file, ".vcf.gz")
+    String prefix = basename(prefix1, ".vcf")
 
     String plink_id_delim_option = if defined (id_delim) then "--id-delim " + id_delim else "--double-id"
 
@@ -194,7 +194,7 @@ task vcf_to_bgen {
 
         awk 'NR > 2 {print $1}' ${prefix}-noNAs.sample  > ${prefix}_bgen._saige.sample #samples file for saige
 
-        echo -e "~{prefix}.bgen\t~{prefix}.bgen.bgi" >bgen_file_paths.txt 
+        # echo -e "${prefix}.bgen\t${prefix}.bgen.bgi" >bgen_file_paths.txt 
 	>>>
 
 	runtime {
@@ -210,7 +210,7 @@ task vcf_to_bgen {
 		File bgen_file_sample = "${prefix}-noNAs.sample"
 		File bgen_file_log = "${prefix}.log"
         File bgen_file_saige_sample = "${prefix}_bgen._saige.sample"
-        File bgen_file_paths = "bgen_file_paths.txt"
+        # File bgen_file_paths = "bgen_file_paths.txt"
 	}
 }
 
@@ -451,18 +451,21 @@ task get_cohort_samples {
     }
 }
 
-#till I find a more elegant solution...
-task cat_file {
-    Array [File] files
+task get_bgen_file_paths {
+    Array [File] bgen_files
+    Array [File] bgen_file_indices
 
     Int? memory = 2
     Int? disk = 10
     Int? threads = 1
     Int? preemptible_tries = 3
 
+    #Array[Pair[File, File]] bgen_zipped = zip(bgen_files, bgen_file_indices) 
+    Array[Array[File]] bgen_zipped = transpose([bgen_files, bgen_file_indices]) 
+
     command <<<
 
-        cat ${sep=' ' files} >concat_file.txt
+        cat ${write_tsv(bgen_zipped)} > bgen_file.txt
 
     >>>
 
@@ -475,7 +478,7 @@ task cat_file {
 	}
 
     output {
-        File merged_file = "concat_file.txt"
+        File merged_file = "bgen_file.txt"
     }
 }
 

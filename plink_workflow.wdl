@@ -96,9 +96,10 @@ workflow run_preprocess {
 		        }
 	    }
 
-        call preprocess_tasks.cat_file{
+        call preprocess_tasks.get_bgen_file_paths{
             input:
-                files = vcf_to_bgen.bgen_file_paths
+                bgen_files = vcf_to_bgen.bgen_file,
+                bgen_file_indices = vcf_to_bgen.bgen_file_index
         }
     } 
 
@@ -111,7 +112,7 @@ workflow run_preprocess {
           #Array[File] bgen_files = select_first([vcf_to_bgen.out_bgen, imputed_bgen_files])
           #Array[File] bgen_file_indices = select_first([index_bgen_file.bgen_file_index, imputed_bgen_index_files])
           #Array[Array[File]] bgen_files_and_indices = select_first([converted_bgen_file_list,read_tsv(select_first([imputed_list_of_bgen_file,"null"]))])          
-          File bgen_paths_file = select_first([imputed_list_of_bgen_file,cat_file.merged_file])
+          File bgen_paths_file = select_first([imputed_list_of_bgen_file,get_bgen_file_paths.merged_file])
           File bgen_subset_samples = get_cohort_samples.bgen_subset_samples
           File plink_subset_samples = get_cohort_samples.plink_subset_samples
           File covar_file = addPCs_to_covar_matrix.covar_file_with_pcs
