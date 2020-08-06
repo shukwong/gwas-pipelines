@@ -1,6 +1,6 @@
-import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/preprocess_tasks.wdl" as preprocess_tasks
+# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/preprocess_tasks.wdl" as preprocess_tasks
 
-# import "tasks/preprocess_tasks.wdl" as preprocess_tasks
+import "tasks/preprocess_tasks.wdl" as preprocess_tasks
 
 workflow run_preprocess {
     
@@ -18,6 +18,9 @@ workflow run_preprocess {
     File? imputed_list_of_vcf_file
     File? imputed_list_of_bgen_file
     #File? imputed_list_of_bgen_index_file
+
+    String? dosageField
+    String? id_delim
 
     call preprocess_tasks.get_cohort_samples {
         input: 
@@ -87,7 +90,9 @@ workflow run_preprocess {
 	        call preprocess_tasks.vcf_to_bgen {
 	            input:
                     vcf_file = imputed_file[0],
-                    samples_to_keep_file = imputed_samples_to_keep_file
+                    samples_to_keep_file = imputed_samples_to_keep_file,
+                    dosageField = dosageField,
+                    id_delim = id_delim
 		        }
 	    }
 

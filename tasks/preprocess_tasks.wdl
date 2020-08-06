@@ -165,18 +165,23 @@ task vcf_to_bgen {
     File vcf_file
     File samples_to_keep_file
 
+    String? dosageField = "HDS"
+    String? id_delim
+
     Int? bits=8
     Int? memory = 24
     Int? memory_in_MB = 24000
     Int? disk = 100
 
     String prefix = basename(vcf_file, ".vcf.gz")
-    
+    prefix = basename(prefix, ".vcf")
+
+    String plink_id_delim_option = if defined (id_delim) then "--id-delim " + id_delim else "--double-id"
 
 	command <<<
         set -euo pipefail
 
-        plink2 --memory ${memory_in_MB} --vcf ${vcf_file} dosage=HDS --id-delim _ \
+        plink2 --memory ${memory_in_MB} --vcf ${vcf_file} dosage=${dosageField} ${plink_id_delim_option} \
             --make-pgen erase-phase --out plink_out
 
         plink2 --memory ${memory_in_MB} --pfile plink_out --keep ${samples_to_keep_file} \

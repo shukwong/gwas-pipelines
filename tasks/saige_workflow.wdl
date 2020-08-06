@@ -196,8 +196,9 @@ task saige_step2_SPAtests {
 
     String file_prefix = basename(bgen_file, ".bgen") 
 
-    String? chrom 
-    String saige_output_file_name = if defined (chrom) then file_prefix + "." + chrom + ".txt" else file_prefix + ".txt"
+    #String? chrom 
+    #String saige_output_file_name = if defined (chrom) then file_prefix + "." + chrom + ".txt" else file_prefix + ".txt"
+    String saige_output_file_name = file_prefix + ".txt"
 
 	Int? memory = 64
 	Int? disk = 500
@@ -205,6 +206,7 @@ task saige_step2_SPAtests {
     Int? preemptible_tries = 3
 
 	command {
+        
       step2_SPAtests.R \
         --bgenFile=${bgen_file} \
         --bgenFileIndex=${bgen_file_index} \
@@ -221,7 +223,6 @@ task saige_step2_SPAtests {
         --IsOutputHetHomCountsinCaseCtrl=TRUE \
         --IsOutputAFinCaseCtrl=TRUE
 
-#--chrom=${chrom} \
         gzip ${saige_output_file_name}
 	}
 

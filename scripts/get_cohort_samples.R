@@ -24,7 +24,7 @@ genotype_samples <- read_table2(genotype_samples_to_keep_file, col_names = F)
 imputed_samples <- read_table2(imputed_samples_to_keep_file, col_names = F)
 
 covariants_matched <- covariates %>% filter (!!sym(sampleID) %in% genotype_samples$X2)  %>%               
-                      filter (!!sym(sampleID) %in% imputed_samples$X1 )
+                      filter (!!sym(sampleID) %in% imputed_samples$X2 )
 
 
 plink_subset_samples <- covariants_matched %>% mutate (FID = !!sym(sampleID), IID = !!sym(sampleID)) %>% select (FID,IID)

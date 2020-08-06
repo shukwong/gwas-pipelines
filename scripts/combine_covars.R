@@ -1,4 +1,5 @@
-require(tidyverse)
+library(tidyverse)
+library(data.table)
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 3 ) {
@@ -12,14 +13,14 @@ covar_file_id_colname <- args[3]
 
      
 ## try to read phenotype data
-covars_data <- read_delim(covar_filename, col_names =TRUE, delim="\t")
+covars_data <- fread(covar_filename, header = TRUE)
 if (length(unique(colnames(covars_data))) != length(colnames(covars_data))) {
    stop(paste("duplicate column names detected in phenotype file \"", covar_filename, "\"", sep=""))
 }
 
 
 ## read PC file, we assume this came from plink
-pcs <- read_delim(pc_filename, col_names=TRUE, delim="\t") 
+pcs <- fread(pc_filename, header=TRUE) 
 pcs <- pcs %>% rename (FID=`#FID`, !!covar_file_id_colname := IID)
 
 
