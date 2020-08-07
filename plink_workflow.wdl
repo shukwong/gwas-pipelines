@@ -1,6 +1,6 @@
-# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/preprocess_tasks.wdl" as preprocess_tasks
+import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/preprocess_tasks.wdl" as preprocess_tasks
 
-import "tasks/preprocess_tasks.wdl" as preprocess_tasks
+#import "tasks/preprocess_tasks.wdl" as preprocess_tasks
 
 workflow run_preprocess {
     
