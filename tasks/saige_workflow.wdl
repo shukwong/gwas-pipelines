@@ -14,9 +14,11 @@ workflow run_saige {
     String covarColList #covar list, separated by comma
     #String covar_sampleID_colname
     
-    File bgen_paths_file 
+    #File bgen_paths_file 
 
-    Array[Array[String]] bgen_file_list = read_tsv(bgen_paths_file)
+    #Array[Array[String]] bgen_files_and_indices = read_tsv(bgen_paths_file)
+
+    Array[Array[File]] bgen_files_and_indices
 
     call match_genotype_and_imputed_samples {
         input:
@@ -36,7 +38,7 @@ workflow run_saige {
             covarColList = covarColList
     }
 
-    scatter (bgen_file_line in bgen_file_list) {
+    scatter (bgen_file_line in bgen_files_and_indices) {
 
 	    call saige_step2_SPAtests {
 	        input:
@@ -206,7 +208,7 @@ task saige_step2_SPAtests {
     Int? preemptible_tries = 3
 
 	command {
-        
+
       step2_SPAtests.R \
         --bgenFile=${bgen_file} \
         --bgenFileIndex=${bgen_file_index} \

@@ -3,10 +3,10 @@ import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/ta
 import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/saige_workflow.wdl" as saige
 import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/bolt_workflow.wdl" as bolt
 
-# import "plink_workflow.wdl" as preprocess
-# import "tasks/preprocess_tasks.wdl" as preprocess_tasks
-# import "tasks/saige_workflow.wdl" as saige
-# import "tasks/bolt_workflow.wdl" as bolt
+#  import "plink_workflow.wdl" as preprocess
+#  import "tasks/preprocess_tasks.wdl" as preprocess_tasks
+#  import "tasks/saige_workflow.wdl" as saige
+#  import "tasks/bolt_workflow.wdl" as bolt
 
 workflow run_association_test {
     
@@ -57,7 +57,7 @@ workflow run_association_test {
 
             genotype_samples_to_keep_file = genotype_samples_to_keep_file,
             imputed_samples_to_keep_file = imputed_samples_to_keep_file,
-            #imputed_list_of_vcf_file = imputed_list_of_vcf_file,
+            imputed_list_of_vcf_file = imputed_list_of_vcf_file,
             imputed_list_of_bgen_file = imputed_list_of_bgen_file,
             covariate_tsv_file = covar_subset_file,
             chain_file = chain_file,
@@ -73,7 +73,8 @@ workflow run_association_test {
                     genotype_bed = run_preprocess.genotype_ready_bed,
                     genotype_bim = run_preprocess.genotype_ready_bim,
                     genotype_fam = run_preprocess.genotype_ready_fam,
-                    bgen_paths_file = run_preprocess.bgen_paths_file,
+                    #bgen_paths_file = run_preprocess.bgen_paths_file,
+                    bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
                     imputed_samples_file = imputed_samples_to_keep_file,
                     phenoCol = phenoCol,
                     covar_file = run_preprocess.covar_file,
@@ -92,7 +93,8 @@ workflow run_association_test {
                     genetic_map_file = genetic_map_file,
                     imputed_samples_file = imputed_samples_to_keep_file,
                     covar_file = run_preprocess.covar_file,
-                    bgen_list_file = run_preprocess.bgen_paths_file,
+                    #bgen_list_file = run_preprocess.bgen_paths_file,
+                    bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
                     pheno_col = phenoCol,
                     qCovarCol = continuous_covar_list + "," + pcs_as_string
             }

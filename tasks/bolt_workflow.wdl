@@ -12,7 +12,7 @@ workflow bolt_workflow {
     File genetic_map_file
     File imputed_samples_file
     File covar_file
-    File bgen_list_file
+    #File bgen_list_file
 
     String pheno_col
     String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
@@ -26,10 +26,10 @@ workflow bolt_workflow {
     #          imputed_samples_file = imputed_samples_file
     # }
 
+    Array[Array[File]] bgen_files_and_indices
+    #Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
 
-    Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
-
-    scatter (bgen_file_line in bgen_file_list) {
+    scatter (bgen_file_line in bgen_files_and_indices) {
 
         call subset_bgen_from_genotype {
             input:
