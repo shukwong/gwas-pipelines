@@ -75,7 +75,7 @@ workflow run_association_test {
                     genotype_fam = run_preprocess.genotype_ready_fam,
                     #bgen_paths_file = run_preprocess.bgen_paths_file,
                     bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
-                    imputed_samples_file = imputed_samples_to_keep_file,
+                    imputed_samples_file = run_preprocess.bgen_samples,
                     phenoCol = phenoCol,
                     covar_file = run_preprocess.covar_file,
                     covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string

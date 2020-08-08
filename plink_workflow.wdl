@@ -98,6 +98,10 @@ workflow run_preprocess {
 
         Array[Array[File]] converted_bgen_file_list = transpose([vcf_to_bgen.bgen_file, vcf_to_bgen.bgen_file_index]) 
 
+        Array[File] bgen_file_saige_samples = vcf_to_bgen.bgen_file_saige_sample
+
+        File bgen_file_saige_sample = bgen_file_saige_samples[0]
+
     }  
     
     if (defined(imputed_list_of_bgen_file)) {
@@ -116,7 +120,7 @@ workflow run_preprocess {
           #Array[File] bgen_file_indices = select_first([index_bgen_file.bgen_file_index, imputed_bgen_index_files])
           Array[Array[File]] bgen_files_and_indices = select_first([converted_bgen_file_list,bgen_file_list, ""])          
           #File bgen_paths_file = select_first([imputed_list_of_bgen_file,get_bgen_file_paths.merged_file])
-          File bgen_subset_samples = get_cohort_samples.bgen_subset_samples
+          File bgen_samples = select_first([bgen_file_saige_sample, imputed_samples_to_keep_file])
           File plink_subset_samples = get_cohort_samples.plink_subset_samples
           File covar_file = addPCs_to_covar_matrix.covar_file_with_pcs
           File pcs_as_string_file = addPCs_to_covar_matrix.pcs_as_string_file
