@@ -1,12 +1,12 @@
-import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/plink_workflow.wdl" as preprocess
-import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/preprocess_tasks.wdl" as preprocess_tasks
-import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/saige_workflow.wdl" as saige
-import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/bolt_workflow.wdl" as bolt
+# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/plink_workflow.wdl" as preprocess
+# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/preprocess_tasks.wdl" as preprocess_tasks
+# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/saige_workflow.wdl" as saige
+# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/bolt_workflow.wdl" as bolt
 
-#  import "plink_workflow.wdl" as preprocess
-#  import "tasks/preprocess_tasks.wdl" as preprocess_tasks
-#  import "tasks/saige_workflow.wdl" as saige
-#  import "tasks/bolt_workflow.wdl" as bolt
+ import "plink_workflow.wdl" as preprocess
+ import "tasks/preprocess_tasks.wdl" as preprocess_tasks
+ import "tasks/saige_workflow.wdl" as saige
+ import "tasks/bolt_workflow.wdl" as bolt
 
 workflow run_association_test {
     
@@ -91,7 +91,7 @@ workflow run_association_test {
                     pheno_file = run_preprocess.covar_file,
                     ld_scores_file = ld_scores_file,
                     genetic_map_file = genetic_map_file,
-                    imputed_samples_file = imputed_samples_to_keep_file,
+                    imputed_samples_file = run_preprocess.bgen_samples,
                     covar_file = run_preprocess.covar_file,
                     #bgen_list_file = run_preprocess.bgen_paths_file,
                     bgen_files_and_indices = run_preprocess.bgen_files_and_indices,

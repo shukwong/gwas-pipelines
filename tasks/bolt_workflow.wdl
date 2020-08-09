@@ -173,9 +173,9 @@ task subset_bgen_from_genotype {
     File bgen_file
     File imputed_samples_file
 
-    Int? memory = 32
+    Int? memory = 16
     Int? disk = 200
-    Int? threads = 8
+    Int? threads = 4
 
     command <<<
         echo -e "ID_1 ID_2\n0 0" >imputed.bgen.samples

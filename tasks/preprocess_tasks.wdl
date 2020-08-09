@@ -185,14 +185,14 @@ task vcf_to_bgen {
             --make-pgen erase-phase --out plink_out
 
         plink2 --memory ${memory_in_MB} --pfile plink_out --keep ${samples_to_keep_file} \
-            --export bgen-1.2 bits=${bits} --out ${prefix}
+            --export bgen-1.2 bits=${bits} id-paste=iid --out ${prefix}
 
         bgenix -g ${prefix}.bgen -index -clobber
 
         ## mysterious file format discrepancy causes failures with FASTGWA; change NA values to 0 in sample files
         sed 's/NA$/0/' ${prefix}.sample > ${prefix}-noNAs.sample    
 
-        awk 'NR > 2 {print $1}' ${prefix}-noNAs.sample  > ${prefix}_bgen._saige.sample #samples file for saige
+        awk 'NR > 2 {print $1}' ${prefix}-noNAs.sample  > ${prefix}_bgen.sample #samples file for saige
 
         # echo -e "${prefix}.bgen\t${prefix}.bgen.bgi" >bgen_file_paths.txt 
 	>>>
@@ -209,7 +209,7 @@ task vcf_to_bgen {
         File bgen_file_index = "${prefix}.bgen.bgi"
 		File bgen_file_sample = "${prefix}-noNAs.sample"
 		File bgen_file_log = "${prefix}.log"
-        File bgen_file_saige_sample = "${prefix}_bgen._saige.sample"
+        File bgen_file_saige_sample = "${prefix}_bgen.sample"
         # File bgen_file_paths = "bgen_file_paths.txt"
 	}
 }
