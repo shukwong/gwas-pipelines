@@ -511,3 +511,42 @@ task addPCs_to_covar_matrix {
         File pcs_as_string_file = "pcs_as_string.txt"
     }
 }
+
+#TODO: include this in the 
+task make_summary_plots {
+    File association_summary_file
+
+    String? BP_column = POS
+    String? CHR_column = CHR
+    String? pval_col = P
+    String? minrep_col = SNP
+    Int? loglog_pval=10
+
+    String prefix = basename(association_summary_file, ".tsv.gz")
+
+    Int? memory = 32
+    Int? disk = 20
+    Int? threads = 4
+
+    command {
+        wget https://raw.githubusercontent.com/FINNGEN/saige-pipelines/master/scripts/qqplot.R
+
+        Rscript qqplot.R -f ${association_summary_file} -o ${prefix} \
+            --chrcol ${CHR} -b POS -m SNP    
+    }
+
+    runtime {
+		docker: "rocker/tidyverse:3.6.3"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		gpu: false
+	}
+
+    output {
+        File manhattan_file =  "${prefix}_manhattan.png"
+        File manhattan_loglog_file = "${prefix}_manhattan_loglog.png"
+        File qqplot_file = "${prefix}_qqplot.png"
+    }
+
+}
