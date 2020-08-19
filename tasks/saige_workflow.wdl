@@ -146,7 +146,8 @@ task saige_step1_fitNULL {
 
     String phenoCol
     String covarColList #covar list, separated by comma
-    Float relatedness_cutoff
+    
+    Float? relatedness_cutoff = 0.125
 
     Int? memory = 64
     Int? disk = 200
