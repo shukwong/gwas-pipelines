@@ -512,14 +512,14 @@ task addPCs_to_covar_matrix {
     }
 }
 
-#TODO: include this in the 
+#TODO: include this 
 task make_summary_plots {
     File association_summary_file
 
-    String? BP_column = POS
-    String? CHR_column = CHR
-    String? pval_col = P
-    String? minrep_col = SNP
+    String? BP_column = "POS"
+    String? CHR_column = "CHR"
+    String? pval_col = "P"
+    String? minrep_col = "SNP"
     Int? loglog_pval=10
 
     String prefix = basename(association_summary_file, ".tsv.gz")
@@ -532,7 +532,7 @@ task make_summary_plots {
         wget https://raw.githubusercontent.com/FINNGEN/saige-pipelines/master/scripts/qqplot.R
 
         Rscript qqplot.R -f ${association_summary_file} -o ${prefix} \
-            --chrcol ${CHR} -b POS -m SNP    
+            --chrcol ${CHR_column} -b POS -m SNP    
     }
 
     runtime {
