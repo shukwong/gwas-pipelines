@@ -40,7 +40,7 @@ continuous_covar_list = vector()
 
 for (i in 1:nrow(variable_info)) {
   
-  if (variable_info$excluded[i]!="no") {next} else if (variable_info$variableName[i]==phenoCol) {next}
+  if (variable_info$variableName[i]==phenoCol) {next}
   
   if (toupper(variable_info$variableType[i])=="SAMPLEID") {
     next
@@ -79,51 +79,62 @@ for (i in 1:length(sample_sets)) {
   #start the log file
   covar_set_log <- paste0(sample_set_name, ".log")
   write_lines(paste0("Full covar file has ", nrow(covariates_current_set), " samples."),      
-             covar_set_log)
+              covar_set_log)
   
-  #filter on other criteria, use a for loop for now
-  for (j in 1:nrow(sample_set)) {
+  if (sample_set_name == "complete_set") {
+    
+    write_lines("Full set of samples are includes in current set", covar_set_log, append = TRUE)
+    
+  } else {
+  
+    #filter on other criteria, use a for loop for now
+    for (j in 1:nrow(sample_set)) {
     #if (varname=="samples_included") {next}
     
-    varname = sample_set$varname[j]
-    criteria = sample_set$criteria[j]
-    value = sample_set$value[j]
+      varname = sample_set$varname[j]
+      criteria = sample_set$criteria[j]
+      value = sample_set$value[j]
     
-    #if samples_included is specified, we would read in the samples file
-    #we assume that sample names are unique and hence we are expecting a single column 
-    #file without header
-    #TODO: add exclude option
-    if (varname == "samples") { 
-      samples_filename <- value
-      samples <- read_delim(samples_filename, delim=" ", col_names = FALSE) %>%
+      #if samples_included is specified, we would read in the samples file
+      #we assume that sample names are unique and hence we are expecting a single column 
+      #file without header
+      #TODO: add exclude option
+      if (varname == "samples") {  #this does not work yet, as cromwell needs to localize the sample file
+        samples_filename <- value
+        samples <- read_delim(samples_filename, delim=" ", col_names = FALSE) %>%
             pull (X1)
-      covariates_current_set <- covariates_current_set %>% filter (sampleID %in% samples_to_include)
-      write_lines(paste0("samples from ", samples_filename, " are included. There are ", nrow(covariates_current_set), " samples left. "), covar_set_log, append = TRUE)
-    } else if (criteria == "include") {
-      covariates_current_set <- covariates_current_set[which(covariates_current_set[[varname]] %in% value),]
-      write_lines(paste0("samples with ", varname, "==", value, " are included. There are ", nrow(covariates_current_set), " samples left."), covar_set_log, append = TRUE)
+        covariates_current_set <- covariates_current_set %>% filter (sampleID %in% samples_to_include)
+        write_lines(paste0("samples from ", samples_filename, " are included. There are ", 
+                           nrow(covariates_current_set), " samples left. "), covar_set_log, append = TRUE)
+      } else if (criteria == "include") {
+        covariates_current_set <- covariates_current_set[which(covariates_current_set[[varname]] %in% value),]
+        write_lines(paste0("samples with ", varname, "==", value, " are included. There are ", 
+                           nrow(covariates_current_set), " samples left."), covar_set_log, append = TRUE)
       
-    } else if (criteria == ">") { # a bit stupid to separate them but not sure how to do this elegantly
+      } else if (criteria == ">") { # a bit stupid to separate them but not sure how to do this elegantly
       
-      covariates_current_set <- covariates_current_set[which(covariates_current_set[[varname]] > value),]
-      write_lines(paste0("samples with ", varname, ">", value, " are included. There are ", nrow(covariates_current_set), " samples left."), covar_set_log, append = TRUE)
+        covariates_current_set <- covariates_current_set[which(covariates_current_set[[varname]] > value),]
+        write_lines(paste0("samples with ", varname, ">", value, " are included. There are ", 
+                           nrow(covariates_current_set), " samples left."), covar_set_log, append = TRUE)
       
-    } else if (criteria == "<") {
+      } else if (criteria == "<") {
       
-      covariates_current_set <- covariates_current_set[which(covariates_current_set[[varname]] < value),]
-      write_lines(paste0("samples with ", varname, "<", value, " are included. There are ", nrow(covariates_current_set), " samples left."), covar_set_log, append = TRUE)
+        covariates_current_set <- covariates_current_set[which(covariates_current_set[[varname]] < value),]
+        write_lines(paste0("samples with ", varname, "<", value, " are included. There are ", 
+                           nrow(covariates_current_set), " samples left."), covar_set_log, append = TRUE)
       
-    } else if (criteria == "==") {
+      } else if (criteria == "==") {
       
-      covariates_current_set <- covariates_current_set[which(covariates_current_set[[varname]] == value),]
-      write_lines(paste0("samples with ", varname, "==", value, " are included. There are ", nrow(covariates_current_set), " samples left."), covar_set_log, append = TRUE)
+        covariates_current_set <- covariates_current_set[which(covariates_current_set[[varname]] == value),]
+        write_lines(paste0("samples with ", varname, "==", value, " are included. There are ", 
+                           nrow(covariates_current_set), " samples left."), covar_set_log, append = TRUE)
       
-    } else {
-      stop (paste0 ("Criteria ", criteria, " is not recognized."))
+      } else {
+        stop (paste0 ("Criteria ", criteria, " is not recognized."))
+      }
+    
     }
-    
-    
-  }
+  }  
   
   #get complete cases
   covariates_current_set <- covariates_current_set %>% select(c(!!sym(sampleID), !!sym(phenoCol), all_of(binary_covar_list), all_of(continuous_covar_list)))
