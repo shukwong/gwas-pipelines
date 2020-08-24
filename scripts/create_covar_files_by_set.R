@@ -10,25 +10,19 @@ require(jsonlite)
 
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 4 ) {
+if (length(args) < 3 ) {
     stop("Arguments to create_covar_files_by_set.R: \
-          create_covar_files_by_set.R covariate_tsv_file variable-info_tsv_file sample_sets_json_file phenoCol <sampleID>" )
+          create_covar_files_by_set.R covariate_tsv_file variable-info_tsv_file sample_sets_json_file" )
 }
 
   
 covariate_tsv_file <- args[1]
 variable_info_tsv_file <- args[2]
 sample_sets_json_file <- args[3]
-phenoCol <- args[4]
 
 covariates <- read_table2(covariate_tsv_file)
 variable_info <- read_table2(variable_info_tsv_file)
 sample_sets <- fromJSON(sample_sets_json_file)
-
-sampleID = 'IID'
-if (length(args)==5) {
-  sampleID = args[5]
-}
 
 
 #variable info file parse
@@ -40,9 +34,13 @@ continuous_covar_list = vector()
 
 for (i in 1:nrow(variable_info)) {
   
-  if (variable_info$variableName[i]==phenoCol) {next}
-  
-  if (toupper(variable_info$variableType[i])=="SAMPLEID") {
+  if (variable_info$variableType[i]=="phenotype") {
+    write_lines(variable_info$variableName[i], "phenotype_line.txt")
+    phenoCol = variable_info$variableName[i]
+    next
+  } else if (toupper(variable_info$variableType[i])=="SAMPLEID") {
+    write_lines(variable_info$variableName[i], "sampleid_line.txt")
+    sampleID = variable_info$variableName[i]
     next
   } else if (toupper(variable_info$variableType[i]) == "BINARY") {
     binary_covar_list <- c(binary_covar_list, variable_info$variableName[i])

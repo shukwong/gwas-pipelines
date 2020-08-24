@@ -383,41 +383,6 @@ task convert_gen_to_bgen {
 }
 
 
-task get_covar_subsets {
-    File covariate_tsv_file 
-    File variable_info_tsv_file 
-    File sample_sets_json_file
-    String phenoCol
-
-    Int? memory = 4
-    Int? disk = 200
-    Int? threads = 1
-    Int? preemptible_tries = 3
-
-#TODO, change this to git clone a release version when the pipeline is finalized
-    command <<< 
-       
-        wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/create_covar_files_by_set.R
-
-        Rscript create_covar_files_by_set.R ${covariate_tsv_file} ${variable_info_tsv_file} ${sample_sets_json_file} ${phenoCol}
-    >>>
-
-    runtime {
-		docker: "rocker/tidyverse:4.0.0"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-        cpu: "${threads}"
-		preemptible: "${preemptible_tries}"
-	}
-
-    output {
-        Array[File] covar_subsets_files = glob("covars*.tsv")
-        Array[File] covar_subsets_log_files = glob("*.log")
-        File binary_covar_list_file = "binary_covar_list.txt"
-        File continuous_covar_list_file = "continuous_covar_list.txt"
-    }
-
-}
 
 task get_cohort_samples {
     File covariate_tsv_file

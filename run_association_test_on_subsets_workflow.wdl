@@ -1,12 +1,11 @@
-# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/plink_workflow.wdl" as preprocess
-# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/preprocess_tasks.wdl" as preprocess_tasks
-# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/saige_workflow.wdl" as saige
-# import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/v0.01-alpha/tasks/bolt_workflow.wdl" as bolt
 
- import "plink_workflow.wdl" as preprocess
- import "tasks/preprocess_tasks.wdl" as preprocess_tasks
- import "tasks/saige_workflow.wdl" as saige
- import "tasks/bolt_workflow.wdl" as bolt
+ import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/plink_workflow.wdl" as preprocess
+ import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/tasks/saige_workflow.wdl" as saige
+ import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/tasks/bolt_workflow.wdl" as bolt
+
+#  import "plink_workflow.wdl" as preprocess
+#  import "tasks/saige_workflow.wdl" as saige
+#  import "tasks/bolt_workflow.wdl" as bolt
 
 workflow run_association_test {
     
@@ -21,8 +20,8 @@ workflow run_association_test {
     File variable_info_tsv_file
     File sample_sets_json_file
 
-    String phenoCol
-    String covar_sampleID_colname
+   # String phenoCol
+   # String covar_sampleID_colname
 
     Boolean? useBOLT
     Boolean? useSAIGE
@@ -35,18 +34,23 @@ workflow run_association_test {
     File? imputed_list_of_bgen_file
     File? chain_file
     
-    call  preprocess_tasks.get_covar_subsets {
+    call get_covar_subsets {
         input:
         covariate_tsv_file = covariate_tsv_file, 
         variable_info_tsv_file = variable_info_tsv_file, 
-        sample_sets_json_file = sample_sets_json_file,
-        phenoCol = phenoCol
+        sample_sets_json_file = sample_sets_json_file
     }
 
     Array[String] binary_covar_list_lines  = read_lines(get_covar_subsets.binary_covar_list_file)
     String binary_covar_list = binary_covar_list_lines[0]
     Array[String] continuous_covar_list_lines = read_lines(get_covar_subsets.continuous_covar_list_file)
     String continuous_covar_list = continuous_covar_list_lines[0]
+
+    Array[String] phenoCol_lines = read_lines(get_covar_subsets.phenotype_line_file)
+    String phenoCol = phenoCol_lines[0]
+
+    Array[String] covar_sampleID_colname_lines = read_lines(get_covar_subsets.sampleid_line_file)
+    String covar_sampleID_colname = covar_sampleID_colname_lines[0]
 
     scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
         call preprocess.run_preprocess {
@@ -139,3 +143,40 @@ workflow run_association_test {
 }
 
 
+
+task get_covar_subsets {
+    File covariate_tsv_file 
+    File variable_info_tsv_file 
+    File sample_sets_json_file
+
+    Int? memory = 4
+    Int? disk = 200
+    Int? threads = 1
+    Int? preemptible_tries = 3
+
+#TODO, change this to git clone a release version when the pipeline is finalized
+    command <<< 
+       
+        wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/create_covar_files_by_set.R
+
+        Rscript create_covar_files_by_set.R ${covariate_tsv_file} ${variable_info_tsv_file} ${sample_sets_json_file} 
+    >>>
+
+    runtime {
+		docker: "rocker/tidyverse:4.0.0"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		preemptible: "${preemptible_tries}"
+	}
+
+    output {
+        Array[File] covar_subsets_files = glob("covars*.tsv")
+        Array[File] covar_subsets_log_files = glob("*.log")
+        File binary_covar_list_file = "binary_covar_list.txt"
+        File continuous_covar_list_file = "continuous_covar_list.txt"
+        File phenotype_line_file = "phenotype_line.txt"
+        File sampleid_line_file = "sampleid_line.txt"
+    }
+
+}
