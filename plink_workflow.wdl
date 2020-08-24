@@ -305,9 +305,10 @@ task vcf_to_bgen {
     String? id_delim
 
     Int? bits=8
-    Int? memory = 24
-    Int? memory_in_MB = 20000
+    Int? memory = 32
+    # Int? memory_in_MB = 20000
     Int? disk = 100
+    Int? threads = 4
 
     String prefix1 = basename(vcf_file, ".vcf.gz")
     String prefix = basename(prefix1, ".vcf")
@@ -317,11 +318,17 @@ task vcf_to_bgen {
 	command <<<
         set -euo pipefail
 
-        plink2 --memory ${memory_in_MB} --vcf ${vcf_file} dosage=${dosageField} ${plink_id_delim_option} \
+        #plink2 --memory ${memory_in_MB} --vcf ${vcf_file} dosage=${dosageField} ${plink_id_delim_option} \
+        #    --make-pgen erase-phase --out plink_out
+
+        #plink2 --memory ${memory_in_MB} --pfile plink_out --keep ${samples_to_keep_file} \
+        #    --export bgen-1.2 bits=${bits} id-paste=iid --out ${prefix}
+
+        plink2 --threads ${threads} --vcf ${vcf_file} dosage=${dosageField} ${plink_id_delim_option} \
             --make-pgen erase-phase --out plink_out
 
-        plink2 --memory ${memory_in_MB} --pfile plink_out --keep ${samples_to_keep_file} \
-            --export bgen-1.2 bits=${bits} id-paste=iid --out ${prefix}
+        plink2 --threads ${threads} --pfile plink_out --keep ${samples_to_keep_file} \
+            --export bgen-1.2 bits=${bits} id-paste=iid --out ${prefix}    
 
         bgenix -g ${prefix}.bgen -index -clobber
 
@@ -337,6 +344,7 @@ task vcf_to_bgen {
 		docker: "quay.io/shukwong/plink_crossmap_bgen:8984373caf8b"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
 		gpu: false
 	}
 
