@@ -63,11 +63,12 @@ workflow run_association_test {
 
             genotype_samples_to_keep_file = genotype_samples_to_keep_file,
             imputed_samples_to_keep_file = imputed_samples_to_keep_file,
+            covariate_tsv_file = covar_subset_file,
+            covar_sampleID_colname = covar_sampleID_colname,
             imputed_list_of_vcf_file = imputed_list_of_vcf_file,
             imputed_list_of_bgen_file = imputed_list_of_bgen_file,
-            covariate_tsv_file = covar_subset_file,
             chain_file = chain_file,
-            covar_sampleID_colname = covar_sampleID_colname
+            id_delim = id_delim
         }
 
         Array[String] pcs_as_string_lines = read_lines(run_preprocess.pcs_as_string_file)

@@ -20,19 +20,22 @@ workflow run_saige {
 
     Array[Array[File]] bgen_files_and_indices
 
-    call match_genotype_and_imputed_samples {
-        input:
-            genotype_bed = genotype_bed,
-            genotype_bim = genotype_bim,
-            genotype_fam = genotype_fam,
-            imputed_samples_file = imputed_samples_file
-    }
+    # call match_genotype_and_imputed_samples {
+    #     input:
+    #         genotype_bed = genotype_bed,
+    #         genotype_bim = genotype_bim,
+    #         genotype_fam = genotype_fam,
+    #         imputed_samples_file = imputed_samples_file
+    # }
 
     call saige_step1_fitNULL  {
         input:
-            genotype_bed = match_genotype_and_imputed_samples.matched_genotype_bed,
-	        genotype_bim = match_genotype_and_imputed_samples.matched_genotype_bim,
-	        genotype_fam = match_genotype_and_imputed_samples.matched_genotype_fam,
+            # genotype_bed = match_genotype_and_imputed_samples.matched_genotype_bed,
+	        # genotype_bim = match_genotype_and_imputed_samples.matched_genotype_bim,
+	        # genotype_fam = match_genotype_and_imputed_samples.matched_genotype_fam,
+            genotype_bed = genotype_bed,
+	        genotype_bim = genotype_bim,
+	        genotype_fam = genotype_fam,
 	        covar_file = covar_file, 
             phenoCol = phenoCol,
             covarColList = covarColList
@@ -71,37 +74,6 @@ workflow run_saige {
 
 }
 
-task addPCs_to_covar_matrix {
-    File covar_file 
-    File plink_pca_eigenvec_file
-    
-    String phenoCol
-    String covar_sampleID_colname
-    String covarColList
-
-    File? sampleFile
-
-    Int? memory = 8
-    Int? disk = 20
-    Int? threads = 1
-
-    command {
-        Rscript combine_covars.R ${covar_file} ${plink_pca_eigenvec_file} ${phenoCol} \
-            ${covar_sampleID_colname} ${covarColList} pcs_${covar_file} ${sampleFile}
-    }
-
-    runtime {
-		docker: "rocker/tidyverse:3.6.3"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-        cpu: "${threads}"
-		gpu: false
-	}
-
-    output {
-        File covar_file_with_pcs =  "pcs_${covar_file}"
-    }
-}
 
 task match_genotype_and_imputed_samples {
     File genotype_bed
@@ -146,7 +118,7 @@ task saige_step1_fitNULL {
 
     String phenoCol
     String covarColList #covar list, separated by comma
-    
+
     Float? relatedness_cutoff = 0.125
 
     Int? memory = 64

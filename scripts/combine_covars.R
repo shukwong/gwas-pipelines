@@ -25,9 +25,15 @@ pcs <- pcs %>% rename (FID=`#FID`, !!covar_file_id_colname := IID)
 
 
 covar_with_PCs <- covars_data %>% 
-            inner_join(pcs, by=covar_file_id_colname) %>%
-            select(FID, everything())
+            inner_join(pcs, by=covar_file_id_colname) 
 
+if("IID" %in% colnames(covar_with_PCs)) {
+  covar_with_PCs <- covar_with_PCs %>% select (FID, IID, everything())
+} else {
+  covar_with_PCs <- covar_with_PCs %>%
+                    mutate (IID = FID) %>%
+                    select (FID, IID, everything())
+}
 
 #get PCs as string 
 pcs_as_string <-  glue::glue_collapse(colnames(pcs)[grep("^PC",(colnames(pcs)))], ",")

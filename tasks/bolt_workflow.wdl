@@ -31,12 +31,16 @@ workflow bolt_workflow {
 
     scatter (bgen_file_line in bgen_files_and_indices) {
 
-        call subset_bgen_from_genotype {
-            input:
-                plink_fam_file = genotype_fam,
-                bgen_file = bgen_file_line[0],
-                imputed_samples_file = imputed_samples_file
+        # call subset_bgen_from_genotype {
+        #     input:
+        #         plink_fam_file = genotype_fam,
+        #         bgen_file = bgen_file_line[0],
+        #         imputed_samples_file = imputed_samples_file
 
+        # }
+
+        call bgen_get_samples_file {
+            input: bgen_file = bgen_file_line[0]
         }
 
     
@@ -51,9 +55,9 @@ workflow bolt_workflow {
             pheno_file = pheno_file,
             ld_scores_file = ld_scores_file,
             genetic_map_file = genetic_map_file,
-            bgen_samples_file = subset_bgen_from_genotype.subsetted_bgen_samples,
+            bgen_samples_file = bgen_get_samples_file.bgen_samples_file,
             covar_file = covar_file,
-            bgen_file = subset_bgen_from_genotype.subsetted_bgen,
+            bgen_file = bgen_file_line[0],
             pheno_col = pheno_col,
             #qCovars = qCovars
             qCovarCol = qCovarCol
@@ -235,6 +239,34 @@ task match_genotype_and_imputed_samples {
         File matched_genotype_bed = "matched_genotype.bed"
         File matched_genotype_bim = "matched_genotype.bim"
         File matched_genotype_fam = "matched_genotype.fam"
+    }
+
+}
+
+
+task bgen_get_samples_file {
+    File bgen_file
+
+    Int? memory = 16
+    Int? disk = 200
+    Int? threads = 4
+
+    command <<<
+       
+        qctool -g ${bgen_file} -os bgen.samples
+
+    >>>
+
+    runtime {
+		docker: "quay.io/shukwong/qctool:v2.0.8"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		gpu: false
+	}
+
+    output {
+        File bgen_samples_file = "bgen.samples"
     }
 
 }
