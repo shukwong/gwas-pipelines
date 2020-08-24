@@ -86,7 +86,7 @@ workflow run_preprocess {
 	        call vcf_to_bgen {
 	            input:
                     vcf_file = imputed_file[0],
-                    samples_to_keep_file = imputed_samples_to_keep_file,
+                    samples_to_keep_file = get_cohort_samples.plink_subset_samples,
                     dosageField = dosageField,
                     id_delim = id_delim
 		        }
