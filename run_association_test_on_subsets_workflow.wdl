@@ -33,6 +33,8 @@ workflow run_association_test {
     File? imputed_list_of_vcf_file
     File? imputed_list_of_bgen_file
     File? chain_file
+
+    String? id_delim #delim character for vcf file, if not defined, double ID is assumed
     
     call get_covar_subsets {
         input:

@@ -35,9 +35,12 @@ write.table(covariants_matched, "covars_subsetted.tsv", quote=F, sep=" ",
 write.table(plink_subset_samples, "plink_subsetted.samples", quote=F, sep=" ",
             col.names = T, row.names = F)
 
-write_lines("ID_1 ID_2", "bgen_subsetted.samples")
-write_lines("0 0", "bgen_subsetted.samples", append = TRUE)
-write.table(plink_subset_samples, "bgen_subsetted.samples", quote=F, sep=" ",
-            col.names = F, row.names = F, append = TRUE)
+write.table(plink_subset_samples$IID, "subsetted.samples", quote=F, sep=" ",
+            col.names = F, row.names = F)
+
+# write_lines("ID_1 ID_2", "bgen_subsetted.samples")
+# write_lines("0 0", "bgen_subsetted.samples", append = TRUE)
+# write.table(plink_subset_samples, "bgen_subsetted.samples", quote=F, sep=" ",
+#             col.names = F, row.names = F, append = TRUE)
 
 

@@ -558,7 +558,7 @@ task get_cohort_samples {
     output {
         File covar_subset_file = "covars_subsetted.tsv"
         File plink_subset_samples = "plink_subsetted.samples"
-        File bgen_subset_samples = "bgen_subsetted.samples"
+        File subset_samples = "subsetted.samples"
     }
 }
 
