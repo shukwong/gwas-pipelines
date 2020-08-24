@@ -379,14 +379,14 @@ task liftover_plink {
             | grep -v alt | grep -v ^chrX | grep -v ^chrY | sort -k1,1 -k2,2g \
             | cut -f4 >bim_as_bed.mapped.ids
 
-        plink \
+        plink2 \
             --bed ${genotype_bed} --bim ${genotype_bim} \
             --fam ${genotype_fam} --extract bim_as_bed.mapped.ids \
             --make-bed --out genotypes_updated    
     >>>        
 
 	runtime {
-		docker: "quay.io/shukwong/plinkcrossmap:v1"
+		docker: "quay.io/shukwong/plink_crossmap_bgen:8984373caf8b"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
 		gpu: false
