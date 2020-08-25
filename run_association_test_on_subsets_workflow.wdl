@@ -223,7 +223,7 @@ task make_summary_plots {
     Int? threads = 2
     Int? preemptible_tries = 3
 
-    command {
+    command <<<
         wget https://raw.githubusercontent.com/FINNGEN/saige-pipelines/master/scripts/qqplot.R
 
         R --vanilla -e 'install.packages("qqman",repos = "https://cloud.r-project.org/")'
@@ -232,7 +232,7 @@ task make_summary_plots {
 
         Rscript qqplot.R -f ${association_summary_file} -o ${prefix} \
             --chrcol ${CHR_column} -b POS -m SNP    
-    }
+    >>>
 
     runtime {
 		docker: "rocker/tidyverse:4.0.0"
