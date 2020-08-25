@@ -1,7 +1,4 @@
 
-#import "plink_workflow.wdl" as preprocess
-
-
 workflow bolt_workflow {
     
 	File genotype_bed
@@ -10,9 +7,9 @@ workflow bolt_workflow {
     File pheno_file
     File ld_scores_file
     File genetic_map_file
-    File imputed_samples_file
+    #File imputed_samples_file
     File covar_file
-    #File bgen_list_file
+    File bgen_list_file
 
     String pheno_col
     String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
@@ -26,8 +23,8 @@ workflow bolt_workflow {
     #          imputed_samples_file = imputed_samples_file
     # }
 
-    Array[Array[File]] bgen_files_and_indices
-    #Array[Array[String]] bgen_file_list = read_tsv(bgen_list_file)
+    #Array[Array[File]] bgen_files_and_indices
+    Array[Array[File]] bgen_files_and_indices = read_tsv(bgen_list_file)
 
     scatter (bgen_file_line in bgen_files_and_indices) {
 
@@ -88,9 +85,11 @@ task combine_bolt_results {
     Int? preemptible_tries = 3
 
     command {
-        echo -e "SNP\tCHR\tBP\tGENPOS\tALLELE1\tALLELE0\tA1FREQ\tINFO\tCHISQ_LINREG\tP_LINREG\tBETA\tSE\tCHISQ_BOLT_LMM_INF\tP_BOLT_LMM_INF\tCHISQ_BOLT_LMM\tP_BOLT_LMM" > bolt_${pheno_col}_results_merged.tsv
+        #echo -e "SNP\tCHR\tBP\tGENPOS\tALLELE1\tALLELE0\tA1FREQ\tINFO\tCHISQ_LINREG\tP_LINREG\tBETA\tSE\tCHISQ_BOLT_LMM_INF\tP_BOLT_LMM_INF\tCHISQ_BOLT_LMM\tP_BOLT_LMM" > bolt_${pheno_col}_results_merged.tsv
         
-        cat ${sep=' ' imputed_stats_files} | gzip -d | grep -v ^SNP >> bolt_${pheno_col}_results_merged.tsv
+        echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP" > bolt_${pheno_col}_results_merged.tsv
+
+        cat ${sep=' ' imputed_stats_files} | gzip -d | grep -v ^SNP | awk '{print $2"\t"$3"\t"$1"\t"$5"\t"$6"\t"$11"\t"$12"\t"$14}' >> bolt_${pheno_col}_results_merged.tsv
         
         gzip bolt_${pheno_col}_results_merged.tsv
     }

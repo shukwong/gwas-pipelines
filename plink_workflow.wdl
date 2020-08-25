@@ -105,6 +105,7 @@ workflow run_preprocess {
     }
 
 
+    bgen_files_and_indices = as_map(zip(converted_bgen_file_list,bgen_file_list))
     
 
 	output {
@@ -428,35 +429,6 @@ task plink_subset_sample {
         File genotype_subsetSample_fam = "genotype_subsetSample.fam"
     }
 }
-
-# task add_pcs_to_covar_file {
-#     File eigenvec_file
-#     File covar_file
-#     File samples_to_keep_file
-   
-#     String  phenotype 
-
-#     Int? memory = 32
-#     Int? disk = 20
-
-#     command {
-    
-#         wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/construct_model_matrix.R
-    
-#         Rscript construct_model_matrix.R ${covar_file} ${samples_to_keep_file} ${phenotype} ${phenotype}_model_matrix.tsv
-#     }
-
-#     runtime {
-# 		docker: "rocker/tidyverse:3.6.3-ubuntu18.04"
-# 		memory: "${memory} GB"
-# 		disks: "local-disk ${disk} HDD"
-# 		gpu: false
-# 	}
-
-#     output {
-# 	    File out_covar_file = "${phenotype}_model_matrix.tsv"
-#     }
-# }
 
 task match_genotype_and_imputed_samples {
     File genotype_bed
