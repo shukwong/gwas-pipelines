@@ -105,7 +105,7 @@ workflow run_preprocess {
     }
 
 
-    Map[Array[String], Array[String]] bgen_files_and_indices = as_map(zip(converted_bgen_file_list,bgen_file_list))
+    #Map[Array[String], Array[String]] bgen_files_and_indices = as_map(zip(converted_bgen_file_list,bgen_file_list))
     
 
 	output {
