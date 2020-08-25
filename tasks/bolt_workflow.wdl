@@ -85,6 +85,8 @@ task combine_bolt_results {
     Int? preemptible_tries = 3
 
     command {
+        set -euo pipefail
+        
         #echo -e "SNP\tCHR\tBP\tGENPOS\tALLELE1\tALLELE0\tA1FREQ\tINFO\tCHISQ_LINREG\tP_LINREG\tBETA\tSE\tCHISQ_BOLT_LMM_INF\tP_BOLT_LMM_INF\tCHISQ_BOLT_LMM\tP_BOLT_LMM" > bolt_${pheno_col}_results_merged.tsv
         
         echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP" > bolt_${pheno_col}_results_merged.tsv
