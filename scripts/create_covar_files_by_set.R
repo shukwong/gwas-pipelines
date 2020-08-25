@@ -34,7 +34,7 @@ continuous_covar_list = vector()
 
 for (i in 1:nrow(variable_info)) {
   
-  if (variable_info$variableType[i]=="phenotype_quantitative") {
+  if (variable_info$variableType[i]=="phenotype_quantitative") { 
     write_lines(variable_info$variableName[i], "phenotype_line.txt")
     write_lines("quantitative", "phenotype_type.txt")
     phenoCol = variable_info$variableName[i]
