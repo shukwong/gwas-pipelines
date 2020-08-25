@@ -39,7 +39,8 @@ workflow run_saige {
 	        genotype_fam = genotype_fam,
 	        covar_file = covar_file, 
             phenoCol = phenoCol,
-            covarColList = covarColList
+            covarColList = covarColList,
+            phenotype_type = phenotype_type
     }
 
     scatter (bgen_file_line in bgen_files_and_indices) {
