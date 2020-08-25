@@ -105,7 +105,7 @@ workflow run_preprocess {
     }
 
 
-    bgen_files_and_indices = as_map(zip(converted_bgen_file_list,bgen_file_list))
+    Map[Array[String], Array[String]] bgen_files_and_indices = as_map(zip(converted_bgen_file_list,bgen_file_list))
     
 
 	output {
@@ -595,41 +595,3 @@ task addPCs_to_covar_matrix {
     }
 }
 
-#TODO: include this 
-task make_summary_plots {
-    File association_summary_file
-
-    String? BP_column = "POS"
-    String? CHR_column = "CHR"
-    String? pval_col = "P"
-    String? minrep_col = "SNP"
-    Int? loglog_pval=10
-
-    String prefix = basename(association_summary_file, ".tsv.gz")
-
-    Int? memory = 32
-    Int? disk = 20
-    Int? threads = 4
-
-    command {
-        wget https://raw.githubusercontent.com/FINNGEN/saige-pipelines/master/scripts/qqplot.R
-
-        Rscript qqplot.R -f ${association_summary_file} -o ${prefix} \
-            --chrcol ${CHR_column} -b POS -m SNP    
-    }
-
-    runtime {
-		docker: "rocker/tidyverse:3.6.3"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-        cpu: "${threads}"
-		gpu: false
-	}
-
-    output {
-        File manhattan_file =  "${prefix}_manhattan.png"
-        File manhattan_loglog_file = "${prefix}_manhattan_loglog.png"
-        File qqplot_file = "${prefix}_qqplot.png"
-    }
-
-}
