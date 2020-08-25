@@ -569,12 +569,13 @@ task addPCs_to_covar_matrix {
     File covar_file 
     File plink_pca_eigenvec_file
     String covar_sampleID_colname
+    Int? preemptible_tries = 3
 
     Int? memory = 8
     Int? disk = 20
     Int? threads = 1
 
-    command {
+    command <<<
         wget https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/scripts/combine_covars.R
 
         Rscript combine_covars.R ${covar_file} ${plink_pca_eigenvec_file} \
@@ -582,11 +583,11 @@ task addPCs_to_covar_matrix {
     }
 
     runtime {
-		docker: "rocker/tidyverse:3.6.3"
+		docker: "rocker/tidyverse:4.0.0"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
-		gpu: false
+		preemptible: "${preemptible_tries}"
 	}
 
     output {
