@@ -220,21 +220,26 @@ task make_summary_plots {
 
     Int? memory = 32
     Int? disk = 20
-    Int? threads = 4
+    Int? threads = 2
+    Int? preemptible_tries = 3
 
     command {
         wget https://raw.githubusercontent.com/FINNGEN/saige-pipelines/master/scripts/qqplot.R
+
+        R --vanilla -e 'install.packages("qqman",repos = "https://cloud.r-project.org/")'
+        R --vanilla -e 'install.packages("optparse",repos = "https://cloud.r-project.org/")'
+        R --vanilla -e 'install.packages("R.utils",repos = "https://cloud.r-project.org/")'
 
         Rscript qqplot.R -f ${association_summary_file} -o ${prefix} \
             --chrcol ${CHR_column} -b POS -m SNP    
     }
 
     runtime {
-		docker: "rocker/tidyverse:3.6.3"
+		docker: "rocker/tidyverse:4.0.0"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
-		gpu: false
+		preemptible: "${preemptible_tries}"
 	}
 
     output {
