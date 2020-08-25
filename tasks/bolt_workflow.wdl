@@ -84,9 +84,9 @@ task combine_bolt_results {
     Int? threads = 1
     Int? preemptible_tries = 3
 
-    command {
+    command <<<
         set -euo pipefail
-        
+
         #echo -e "SNP\tCHR\tBP\tGENPOS\tALLELE1\tALLELE0\tA1FREQ\tINFO\tCHISQ_LINREG\tP_LINREG\tBETA\tSE\tCHISQ_BOLT_LMM_INF\tP_BOLT_LMM_INF\tCHISQ_BOLT_LMM\tP_BOLT_LMM" > bolt_${pheno_col}_results_merged.tsv
         
         echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP" > bolt_${pheno_col}_results_merged.tsv
@@ -94,7 +94,7 @@ task combine_bolt_results {
         cat ${sep=' ' imputed_stats_files} | gzip -d | grep -v ^SNP | awk '{print $2"\t"$3"\t"$1"\t"$5"\t"$6"\t"$11"\t"$12"\t"$14}' >> bolt_${pheno_col}_results_merged.tsv
         
         gzip bolt_${pheno_col}_results_merged.tsv
-    }
+    >>>
 
     runtime {
 		docker: "ubuntu:20.10"
