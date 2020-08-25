@@ -54,6 +54,9 @@ workflow run_association_test {
     Array[String] covar_sampleID_colname_lines = read_lines(get_covar_subsets.sampleid_line_file)
     String covar_sampleID_colname = covar_sampleID_colname_lines[0]
 
+    Array[String] phenotype_type_lines = read_lines(get_covar_subsets.phenotype_type_file)
+    String phenotype_type = phenotype_type_lines[0]
+
     scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
         call preprocess.run_preprocess {
             input:
@@ -179,6 +182,7 @@ task get_covar_subsets {
         File binary_covar_list_file = "binary_covar_list.txt"
         File continuous_covar_list_file = "continuous_covar_list.txt"
         File phenotype_line_file = "phenotype_line.txt"
+        File phenotype_type_file = "phenotype_type.txt"
         File sampleid_line_file = "sampleid_line.txt"
     }
 

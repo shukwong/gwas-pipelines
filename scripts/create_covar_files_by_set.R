@@ -34,11 +34,18 @@ continuous_covar_list = vector()
 
 for (i in 1:nrow(variable_info)) {
   
-  if (variable_info$variableType[i]=="phenotype") {
+  if (variable_info$variableType[i]=="phenotype_quantitative") {
     write_lines(variable_info$variableName[i], "phenotype_line.txt")
+    write_lines("quantitative", "phenotype_type.txt")
     phenoCol = variable_info$variableName[i]
     next
-  } else if (toupper(variable_info$variableType[i])=="SAMPLEID") {
+  } else if (variable_info$variableType[i]=="phenotype_binary") {
+    write_lines(variable_info$variableName[i], "phenotype_line.txt")
+    write_lines("binrary", "phenotype_type.txt")
+    phenoCol = variable_info$variableName[i]
+    next
+  } 
+  else if (toupper(variable_info$variableType[i])=="SAMPLEID") {
     write_lines(variable_info$variableName[i], "sampleid_line.txt")
     sampleID = variable_info$variableName[i]
     next
