@@ -118,6 +118,7 @@ task saige_step1_fitNULL {
 
     String phenoCol
     String covarColList #covar list, separated by comma
+    String phenotype_type #continuous or binary
 
     Float? relatedness_cutoff = 0.125
 
@@ -133,7 +134,7 @@ task saige_step1_fitNULL {
             --phenoCol=${phenoCol} \
             --covarColList=${covarColList} \
             --sampleIDColinphenoFile=IID \
-            --traitType=binary        \
+            --traitType=${phenotype_type}        \
             --IsSparseKin=TRUE \
             --relatednessCutoff=${relatedness_cutoff} \
             --outputPrefix=saige_step1_${phenoCol} \
