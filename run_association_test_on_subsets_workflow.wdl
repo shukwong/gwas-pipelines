@@ -1,9 +1,9 @@
 
- import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/plink_workflow.wdl" as preprocess
+ import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/tasks/preprocess_workflow.wdl" as preprocess
  import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/tasks/saige_workflow.wdl" as saige
  import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/tasks/bolt_workflow.wdl" as bolt
 
-#  import "plink_workflow.wdl" as preprocess
+#  import "tasks/preprocess_workflow.wdl" as preprocess
 #  import "tasks/saige_workflow.wdl" as saige
 #  import "tasks/bolt_workflow.wdl" as bolt
 
@@ -87,8 +87,14 @@ workflow run_association_test {
                     bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
                     imputed_samples_file = run_preprocess.bgen_samples,
                     phenoCol = phenoCol,
+                    phenotype_type = phenotype_type,
                     covar_file = run_preprocess.covar_file,
                     covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string
+            }
+
+            call make_summary_plots as make_saige_plots {
+                input:
+                    association_summary_file = run_saige.merged_saige_file
             }
         }
 
@@ -101,7 +107,7 @@ workflow run_association_test {
                     pheno_file = run_preprocess.covar_file,
                     ld_scores_file = ld_scores_file,
                     genetic_map_file = genetic_map_file,
-                    imputed_samples_file = run_preprocess.bgen_samples,
+                    #imputed_samples_file = run_preprocess.bgen_samples,
                     covar_file = run_preprocess.covar_file,
                     #bgen_list_file = run_preprocess.bgen_paths_file,
                     bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
@@ -116,12 +122,19 @@ workflow run_association_test {
         }    
     }
 
-	# output {
-    #     Array[File] genotype_ready_bed = run_preprocess.genotype_ready_bed
-    #     Array[File] genotype_ready_bim = run_preprocess.genotype_ready_bim
-    #     Array[File] genotype_ready_fam = run_preprocess.genotype_ready_fam
-    #     #Array[File] merged_saige_file = run_saige.merged_saige_file
- 	# }
+	 output {
+        Array[File?] merged_saige_file = run_saige.merged_saige_file
+        Array[File?] merged_bolt_file = bolt_workflow.imputed_stats_file
+
+        Array[File?] saige_manhattan_plots =  make_saige_plots.manhattan_file
+        Array[File?] saige_manhattan_loglog_plots = make_saige_plots.manhattan_loglog_file
+        Array[File?] saige_qqplots = make_saige_plots.qqplot_file
+
+
+        Array[File?] bolt_manhattan_plots =  make_bolt_plots.manhattan_file
+        Array[File?] bolt_manhattan_loglog_plots = make_bolt_plots.manhattan_loglog_file
+        Array[File?] bolt_qqplots = make_bolt_plots.qqplot_file
+ 	}
     
 
     meta {
