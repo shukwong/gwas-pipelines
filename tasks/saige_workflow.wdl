@@ -118,7 +118,8 @@ task saige_step1_fitNULL {
 
     String phenoCol
     String covarColList #covar list, separated by comma
-    String phenotype_type #continuous or binary
+    
+    String? phenotype_type = "binary" #quantitative or binary
 
     Float? relatedness_cutoff = 0.125
 
