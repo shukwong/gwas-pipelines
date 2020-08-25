@@ -13,6 +13,7 @@ workflow run_saige {
     String phenoCol
     String covarColList #covar list, separated by comma
     #String covar_sampleID_colname
+    String? phenotype_type
     
     #File bgen_paths_file 
 
