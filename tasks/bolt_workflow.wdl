@@ -71,6 +71,7 @@ task combine_bolt_results {
 
     Array[File] imputed_stats_files
     String pheno_col
+    String setname
 
     Int? memory = 4
 	Int? disk = 100
