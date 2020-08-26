@@ -13,6 +13,9 @@ workflow run_saige {
     String phenoCol
     String covarColList #covar list, separated by comma
     #String covar_sampleID_colname
+    String setname
+
+
     String? phenotype_type
     
     #File bgen_paths_file 
@@ -60,7 +63,8 @@ workflow run_saige {
     call combine_saige_results {
         input: 
             saige_result_files = saige_step2_SPAtests.saige_output_file,
-            pheno_col = phenoCol
+            pheno_col = phenoCol,
+            setname = setname
     }
 
     output {
@@ -223,6 +227,7 @@ task combine_saige_results {
 
     Array[File] saige_result_files
     String pheno_col
+    String setname
 
     Int? memory = 4
 	Int? disk = 100
@@ -235,11 +240,11 @@ task combine_saige_results {
         #there is no rsid column in the output but it is in the header, so we will be using a header without it
         #echo -e "CHR\tPOS\tSNPID\tAllele1\tAllele2\tAC_Allele2\tAF_Allele2\timputationInfo\tN\tBETA\tSE\tTstat\tp.value\tp.value.NA\tIs.SPA.converge\tvarT\tvarTstar\tAF.Cases\tAF.Controls\tN.Cases\tN.Controls\thomN_Allele2_cases\thetN_Allele2_cases\thomN_Allele2_ctrls\thetN_Allele2_ctrls" > saige_${pheno_col}_results_merged.tsv
 
-        echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP\tN" > saige_${pheno_col}_results_merged.tsv
+        echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP\tN" > saige_${setname}_${pheno_col}_results_merged.tsv
 
-        cat ${sep=' ' saige_result_files} | gzip -d | grep -v ^CHR | tr ' ' '\t' | awk '{print $1"\t"$2"\t"$3"\t"$5"\t"$4"\t"$10"\t"$11"\t"$13"\t"$9}' >> saige_${pheno_col}_results_merged.tsv
+        cat ${sep=' ' saige_result_files} | gzip -d | grep -v ^CHR | tr ' ' '\t' | awk '{print $1"\t"$2"\t"$3"\t"$5"\t"$4"\t"$10"\t"$11"\t"$13"\t"$9}' >> saige_${setname}_${pheno_col}_results_merged.tsv
         
-        gzip saige_${pheno_col}_results_merged.tsv
+        gzip saige_${setname}_${pheno_col}_results_merged.tsv
     >>>
 
     runtime {
@@ -251,6 +256,6 @@ task combine_saige_results {
 	}
 
     output {
-        File merged_saige_file = "saige_${pheno_col}_results_merged.tsv.gz"
+        File merged_saige_file = "saige_${setname}_${pheno_col}_results_merged.tsv.gz"
     }
 }

@@ -77,6 +77,8 @@ workflow run_association_test {
         Array[String] pcs_as_string_lines = read_lines(run_preprocess.pcs_as_string_file)
         String pcs_as_string = pcs_as_string_lines[0]
 
+        String setname = basename(covar_subset_file, "_covars.tsv")
+
         if (defined(useSAIGE) && useSAIGE) {
             call saige.run_saige {
                 input:
@@ -89,7 +91,8 @@ workflow run_association_test {
                     phenoCol = phenoCol,
                     phenotype_type = phenotype_type,
                     covar_file = run_preprocess.covar_file,
-                    covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string
+                    covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string,
+                    setname = setname
             }
 
             call make_summary_plots as make_saige_plots {
@@ -112,7 +115,8 @@ workflow run_association_test {
                     #bgen_list_file = run_preprocess.bgen_paths_file,
                     bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
                     pheno_col = phenoCol,
-                    qCovarCol = continuous_covar_list + "," + pcs_as_string
+                    qCovarCol = continuous_covar_list + "," + pcs_as_string,
+                    setname = setname
             }
 
             call make_summary_plots as make_bolt_plots {
@@ -184,6 +188,7 @@ task get_covar_subsets {
         wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/create_covar_files_by_set.R
 
         Rscript create_covar_files_by_set.R ${covariate_tsv_file} ${variable_info_tsv_file} ${sample_sets_json_file} 
+
     >>>
 
     runtime {
@@ -195,7 +200,7 @@ task get_covar_subsets {
 	}
 
     output {
-        Array[File] covar_subsets_files = glob("covars*.tsv")
+        Array[File] covar_subsets_files = glob("*_covars.tsv")
         Array[File] covar_subsets_log_files = glob("*.log")
         File binary_covar_list_file = "binary_covar_list.txt"
         File continuous_covar_list_file = "continuous_covar_list.txt"
@@ -230,12 +235,11 @@ task make_summary_plots {
         R --vanilla -e 'install.packages("optparse",repos = "https://cloud.r-project.org/")'
         R --vanilla -e 'install.packages("R.utils",repos = "https://cloud.r-project.org/")'
 
-        Rscript qqplot.R -f ${association_summary_file} -o ${prefix} \
-            --chrcol ${CHR_column} -b POS -m SNP    
+        Rscript qqplot.R -f ${association_summary_file} -o ${prefix} --chrcol ${CHR_column} -b POS 
     >>>
 
     runtime {
-		docker: "rocker/tidyverse:4.0.0"
+		docker: "rocker/tidyverse:3.6.3"
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
@@ -243,9 +247,9 @@ task make_summary_plots {
 	}
 
     output {
-        File manhattan_file =  "${prefix}_manhattan.png"
-        File manhattan_loglog_file = "${prefix}_manhattan_loglog.png"
-        File qqplot_file = "${prefix}_qqplot.png"
+        File manhattan_file =  "${prefix}_P_manhattan.png"
+        File manhattan_loglog_file = "${prefix}_P_manhattan_loglog.png"
+        File qqplot_file = "${prefix}_P_qqplot.png"
     }
 
 }
