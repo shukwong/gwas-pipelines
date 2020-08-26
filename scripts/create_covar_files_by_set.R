@@ -162,7 +162,7 @@ for (i in 1:length(sample_sets)) {
   covariates_current_set <- covariates_current_set[complete.cases(covariates_current_set),]
   
   #output the file
-  outfile_name <- paste0("covars_", sample_set_name, ".tsv")
+  outfile_name <- paste0(sample_set_name, "_covars", ".tsv")
   write.table(covariates_current_set, outfile_name, col.names = T,
               row.names = F, quote=FALSE, sep="\t")
       
