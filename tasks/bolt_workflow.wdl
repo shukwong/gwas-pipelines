@@ -95,7 +95,7 @@ task combine_bolt_results {
 		memory: "${memory} GB"
 		disks: "local-disk ${disk} HDD"
         cpu: "${threads}"
-		preemptible: preemptible_tries
+		preemptible: "${preemptible_tries}"
 	}
 
     output {
