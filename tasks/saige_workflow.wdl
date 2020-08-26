@@ -127,7 +127,7 @@ task saige_step1_fitNULL {
     
     String? phenotype_type = "binary" #quantitative or binary
 
-    Float? relatedness_cutoff = 0.125
+    Float? relatedness_cutoff = 0.05
 
     Int? memory = 64
     Int? disk = 200
@@ -166,7 +166,7 @@ task saige_step1_fitNULL {
     }
 }
 
-
+#options for --minMAF and --minMAC? turned off for now
 task saige_step2_SPAtests {
 
     File bgen_file
@@ -194,8 +194,6 @@ task saige_step2_SPAtests {
         --bgenFile=${bgen_file} \
         --bgenFileIndex=${bgen_file_index} \
         --IsDropMissingDosages=FALSE \
-        --minMAF=0.01 \
-        --minMAC=1 \
         --sampleFile=${imputed_samples_file} \
         --GMMATmodelFile=${gmmat_model_file} \
         --varianceRatioFile=${variance_ratio_file} \
