@@ -15,6 +15,8 @@ workflow run_saige {
     #String covar_sampleID_colname
     String setname
 
+    Float? minMAF
+    Float? minMAC
 
     String? phenotype_type
     
@@ -56,7 +58,9 @@ workflow run_saige {
                 #chrom = bgen_file_line[2],
                 gmmat_model_file = saige_step1_fitNULL.gmmat_model_file,
                 variance_ratio_file = saige_step1_fitNULL.variance_ratio_file,
-                sparse_sigma_file = saige_step1_fitNULL.sparse_sigma_file
+                sparse_sigma_file = saige_step1_fitNULL.sparse_sigma_file,
+                minMAF=minMAF,
+                minMAC=minMAC
 	    }
     }
 
@@ -176,7 +180,7 @@ task saige_step2_SPAtests {
     File variance_ratio_file
     File sparse_sigma_file
 
-    Float? minMAF=0.0001
+    Float? minMAF=0.00001
     Float? minMAC=1
 
     String file_prefix = basename(bgen_file, ".bgen") 
