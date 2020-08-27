@@ -166,7 +166,6 @@ task saige_step1_fitNULL {
     }
 }
 
-#options for --minMAF and --minMAC? turned off for now
 task saige_step2_SPAtests {
 
     File bgen_file
