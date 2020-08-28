@@ -51,7 +51,8 @@ workflow bolt_workflow {
             bgen_file = bgen_file_line[0],
             pheno_col = pheno_col,
             #qCovars = qCovars
-            qCovarCol = qCovarCol
+            qCovarCol = qCovarCol,
+            minMAF = minMAF
         }
     }
 
