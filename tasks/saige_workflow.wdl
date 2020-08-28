@@ -192,7 +192,7 @@ task saige_step2_SPAtests {
 	Int? memory = 64
 	Int? disk = 500
     Int? threads = 64
-    Int? preemptible_tries = 3
+    Int? preemptible_tries = 1 
 
 	command {
 

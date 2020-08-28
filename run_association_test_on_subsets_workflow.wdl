@@ -27,9 +27,12 @@ workflow run_association_test {
     Boolean? useSAIGE
 
     #for bolt
-    File genetic_map_file
-    File ld_scores_file
+    File? genetic_map_file
+    File? ld_scores_file
     
+    Float? minMAF
+    Float? minMAC
+
     File? imputed_list_of_vcf_file
     File? imputed_list_of_bgen_file
     File? chain_file
@@ -92,7 +95,9 @@ workflow run_association_test {
                     phenotype_type = phenotype_type,
                     covar_file = run_preprocess.covar_file,
                     covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string,
-                    setname = setname
+                    setname = setname,
+                    minMAF=minMAF,
+                    minMAC=minMAC
             }
 
             call make_summary_plots as make_saige_plots {
@@ -116,7 +121,8 @@ workflow run_association_test {
                     bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
                     pheno_col = phenoCol,
                     qCovarCol = continuous_covar_list + "," + pcs_as_string,
-                    setname = setname
+                    setname = setname,
+                    minMAF = minMAF
             }
 
             call make_summary_plots as make_bolt_plots {

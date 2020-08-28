@@ -18,6 +18,8 @@ workflow bolt_workflow {
     Array[Array[File]] bgen_files_and_indices
     #Array[Array[File]] bgen_files_and_indices = read_tsv(bgen_list_file)
 
+    Float? minMAF
+
     scatter (bgen_file_line in bgen_files_and_indices) {
 
         # call subset_bgen_from_genotype {
@@ -120,6 +122,8 @@ task run_bolt_lmm {
     String qCovarCol 
     #Array[File] imputed_bgen_files = read_lines(imputed_bgen_filelist)
     #Array[String] bgen_files_with_input_option = prefix("--bgenFile ", imputed_bgen_files) 
+
+    Float? minMAF=0.0001
     
 	Int? memory = 32
 	Int? disk = 200
@@ -143,6 +147,7 @@ task run_bolt_lmm {
             --geneticMapFile=${genetic_map_file} \
             --lmmForceNonInf \
             --LDscoresMatchBp \
+            --bgenMinMAF=${minMAF} \
             --numThreads=${threads} \
             --covarFile=${covar_file} \
             $qCovars \
@@ -152,6 +157,9 @@ task run_bolt_lmm {
             --noBgenIDcheck \
             --verboseStats 
 	>>>
+
+ 
+
 
 	runtime {
 		docker: "quay.io/shukwong/bolt-lmm:2.3.4"
