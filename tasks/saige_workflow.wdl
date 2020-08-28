@@ -180,7 +180,7 @@ task saige_step2_SPAtests {
     File variance_ratio_file
     File sparse_sigma_file
 
-    Float? minMAF=0.00001
+    Float? minMAF=0.0001
     Float? minMAC=1
 
     String file_prefix = basename(bgen_file, ".bgen") 
