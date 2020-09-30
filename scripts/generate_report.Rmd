@@ -1,0 +1,36 @@
+---
+title: "Association Study Summary Report"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Association Study Summary Report
+
+This is the Association Study Summary Report. For more details on the workflow see <https://github.com/shukwong/gwas-pipelines/blob/master/README.md>.
+
+Describe the input data
+```{r}
+ls()
+```
+
+
+##  Plots
+
+Manhattan  plots
+```{r echo=FALSE}
+plot(pressure)
+```
+
+QQ  plots
+```{r echo=FALSE}
+plot(pressure)
+```
+
+## links to GWAS summary data
+
+
+## Appendix: maybe running time etc
