@@ -6,11 +6,25 @@ Currently it supports [Bolt-LMM](https://storage.googleapis.com/broad-alkesgroup
 ## Inputs for the workflow
 
 ### genotype files (required) 
-* *genotype_bed*, *genotype_bim* and *genotype_fam* are directly genotype files in Plink format
+The pipeline requires both directly genotyped and imputed genotype files. Currently, the pipeline supports directly genotype files in binary PLINK format, and imputed genotype files in either VCF or bgen format. The directly genotype files and the imputed genotypes *do not* have to be with the same genome build. For example, the directly genotypes can be of hg19 and the imputed genotypes can be of hg38. When the genome builds differ, the directly genotyped files will be converted to match with the imputed genotypes, and the user has to provide the *chain_file* for liftover. 
+
+More spefically, 
+* genotype_bed, *genotype_bim* and *genotype_fam* are directly genotype files in Plink format
 * genotype_samples_to_keep_file: subset of samples to be used  from the genotype file. Need to have FID and IID columns.
-* imputed_samples_to_keep_file: subset of samples to be used from the imputed genotype file. Need to have FID and IID columns. 
+* chain_file (optional): lifting the genotype files to the same build as the imputed files.
+
 
 The first 10 principal components are estimated from the genotype plink files and will be added as covariates for the GWAS analysis. 
+
+### Imputed files (required)  
+The workflow can handle either VCF or bgen files as inputs for the imputed genotype data. The list of the file and their location can be specified as *imputed_list_of_vcf_file* or *imputed_list_of_bgen_file*.
+
+In case that the VCF file is used, they will be converted to bgen format for the association study.  The user can provide the *id_delim* string if FID and IID are concat into one ID, if *id_delim* is not provided, double ID is assumed - both FID and IID are the same as sample ID in VCF.    
+
+Finally, if the imputed data and the genotype data are of different genome build, the workflow can liftover the genotype files to match with the imputed data if the user provides the *chain_file*.
+
+* imputed_list_of_vcf_file or imputed_list_of_bgen_file: list of imputed genotype files (they are usually divided by chromosome)
+* imputed_samples_to_keep_file: subset of samples to be used from the imputed genotype file. Need to have FID and IID columns. 
 
 ### Defining phenotype, covariates and sample sets (required)
 
@@ -63,13 +77,6 @@ Also note that the set name (e.g. complete_set in the example below) will be the
   * if bolt is used, it requires the genetic_map_file and ld_scores_file
 * useSAIGE: true or false
 
-
-### Imputed files    
-The workflow can handle either VCF or bgen files as inputs for the imputed genotype data. The list of the file and their location can be specified as *imputed_list_of_vcf_file* or *imputed_list_of_bgen_file*.
-
-In case that the VCF file is used, the user can provide the *id_delim* string if FID and IID are concat into one ID, if *id_delim* is not provided, double ID is assumed - both FID and IID are the same as sample ID in VCF.    
-
-Finally, if the imputed data and the genotype data are of different genome build, the workflow can liftover the genotype files to match with the imputed data if the user provides the *chain_file*.
 
 ### association test programs specific options
 
