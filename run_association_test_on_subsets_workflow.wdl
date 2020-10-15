@@ -33,8 +33,8 @@ workflow run_association_test {
     File? genetic_map_file
     File? ld_scores_file
     
-    Float? minMAF
-    Float? minMAC
+    Float? minMAF=0.001
+    Float? minMAC=1
 
     File? imputed_list_of_vcf_file
     File? imputed_list_of_bgen_file
