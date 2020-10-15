@@ -92,8 +92,8 @@ workflow run_association_test {
                     imputed_samples_to_keep_file = imputed_samples_to_keep_file,
                     covariate_tsv_file = covar_subset_file,
                     covar_sampleID_colname = covar_sampleID_colname,
-                    imputed_list_of_vcf_file = select_first([imputed_list_of_vcf_file, "NULL"]),
-                    imputed_list_of_bgen_file = select_first([imputed_list_of_bgen_file, "NULL"]),
+                    imputed_list_of_vcf_file =  if defined(imputed_list_of_vcf_file) then select_first([imputed_list_of_vcf_file]) else None,  
+                    imputed_list_of_bgen_file = if defined(imputed_list_of_bgen_file) then select_first([imputed_list_of_bgen_file]) else None,  
                     chain_file = chain_file,
                     id_delim = id_delim
             }
