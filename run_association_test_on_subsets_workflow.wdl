@@ -219,16 +219,16 @@ task get_covar_subsets {
 
         R --vanilla -e 'install.packages("fastDummies",repos = "https://cloud.r-project.org/")'
 
-        Rscript create_covar_files_by_set.R ${covariate_tsv_file} ${variable_info_tsv_file} ${sample_sets_json_file} 
+        Rscript create_covar_files_by_set.R ~{covariate_tsv_file} ~{variable_info_tsv_file} ~{sample_sets_json_file} 
 
     >>>
 
     runtime {
 		docker: "rocker/tidyverse:4.0.0"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-        cpu: "${threads}"
-		preemptible: "${preemptible_tries}"
+		memory: memory + " GiB"
+		disks: "local-disk " + disk + " HDD"
+        cpu: threads
+		preemptible: preemptible_tries
 	}
 
     output {
@@ -269,21 +269,21 @@ task make_summary_plots {
         R --vanilla -e 'install.packages("optparse",repos = "https://cloud.r-project.org/")'
         R --vanilla -e 'install.packages("R.utils",repos = "https://cloud.r-project.org/")'
 
-        Rscript qqplot.R -f ${association_summary_file} -o ${prefix} --chrcol ${CHR_column} -b POS 
+        Rscript qqplot.R -f ~{association_summary_file} -o ~{prefix} --chrcol ~{CHR_column} -b POS 
     >>>
 
     runtime {
 		docker: "rocker/tidyverse:3.6.3"
-		memory: "${memory} GB"
-		disks: "local-disk ${disk} HDD"
-        cpu: "${threads}"
-		preemptible: "${preemptible_tries}"
+		memory: memory + " GiB"
+		disks: "local-disk " + disk + " HDD"
+        cpu: threads
+		preemptible: preemptible_tries 
 	}
 
     output {
-        File manhattan_file =  "${prefix}_P_manhattan.png"
-        File manhattan_loglog_file = "${prefix}_P_manhattan_loglog.png"
-        File qqplot_file = "${prefix}_P_qqplot.png"
+        File manhattan_file =  prefix + "_P_manhattan.png"
+        File manhattan_loglog_file = prefix + "_P_manhattan_loglog.png"
+        File qqplot_file = prefix + "_P_qqplot.png"
     }
 
 }
