@@ -81,30 +81,30 @@ workflow run_association_test {
 
         String batch_name = batch_tbl["batch_name"][idx] 
 
-    scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
-        call preprocess.run_preprocess {
-            input:
-            genotype_bed = genotype_bed,
-            genotype_bim = genotype_bim,
-            genotype_fam = genotype_fam,
+        scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
+            call preprocess.run_preprocess {
+                input:
+                    genotype_bed = genotype_bed,
+                    genotype_bim = genotype_bim,
+                    genotype_fam = genotype_fam,
 
-            genotype_samples_to_keep_file = genotype_samples_to_keep_file,
-            imputed_samples_to_keep_file = imputed_samples_to_keep_file,
-            covariate_tsv_file = covar_subset_file,
-            covar_sampleID_colname = covar_sampleID_colname,
-            imputed_list_of_vcf_file = imputed_list_of_vcf_file,
-            imputed_list_of_bgen_file = imputed_list_of_bgen_file,
-            chain_file = chain_file,
-            id_delim = id_delim
-        }
+                    genotype_samples_to_keep_file = genotype_samples_to_keep_file,
+                    imputed_samples_to_keep_file = imputed_samples_to_keep_file,
+                    covariate_tsv_file = covar_subset_file,
+                    covar_sampleID_colname = covar_sampleID_colname,
+                    imputed_list_of_vcf_file = imputed_list_of_vcf_file,
+                    imputed_list_of_bgen_file = imputed_list_of_bgen_file,
+                    chain_file = chain_file,
+                    id_delim = id_delim
+            }
 
-        Array[String] pcs_as_string_lines = read_lines(run_preprocess.pcs_as_string_file)
-        String pcs_as_string = pcs_as_string_lines[0]
+            Array[String] pcs_as_string_lines = read_lines(run_preprocess.pcs_as_string_file)
+            String pcs_as_string = pcs_as_string_lines[0]
 
-        String setname = basename(covar_subset_file, "_covars.tsv")
+            String setname = basename(covar_subset_file, "_covars.tsv")
 
-        if (defined(useSAIGE) && useSAIGE) {
-            call saige.run_saige {
+            if (defined(useSAIGE) && useSAIGE) {
+                call saige.run_saige {
                 input:
                     genotype_bed = run_preprocess.genotype_ready_bed,
                     genotype_bim = run_preprocess.genotype_ready_bim,
@@ -121,14 +121,14 @@ workflow run_association_test {
                     minMAC=minMAC
             }
 
-            call make_summary_plots as make_saige_plots {
-                input:
+                call make_summary_plots as make_saige_plots {
+                    input:
                     association_summary_file = run_saige.merged_saige_file
+                }
             }
-        }
 
-        if (defined(useBOLT) && useBOLT ) {
-            call bolt.bolt_workflow {
+            if (defined(useBOLT) && useBOLT ) {
+                call bolt.bolt_workflow {
                 input: 
                     genotype_bed = run_preprocess.genotype_ready_bed,
 	                genotype_bim = run_preprocess.genotype_ready_bim,
@@ -144,14 +144,14 @@ workflow run_association_test {
                     qCovarCol = continuous_covar_list + "," + pcs_as_string,
                     setname = setname,
                     minMAF = minMAF
-            }
+                }
 
             call make_summary_plots as make_bolt_plots {
-                input: 
+                    input: 
                     association_summary_file = bolt_workflow.imputed_stats_file
-            }
-        }    
-    }
+                }
+            }    
+        }
     }
 
 	# output {

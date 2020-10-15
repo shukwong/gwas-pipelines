@@ -10,7 +10,6 @@ workflow run_saige {
     
         File imputed_samples_file
         File covar_file
-        File plink_pca_eigenvec_file
 
         String phenoCol
         String covarColList #covar list, separated by comma
