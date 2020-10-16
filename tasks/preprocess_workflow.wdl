@@ -10,7 +10,7 @@ workflow run_preprocess {
         File imputed_samples_to_keep_file
         File covariate_tsv_file
         File imputed_list_of_files  
-        File impute_file_format 
+        String impute_file_format 
 
         String covar_sampleID_colname
     
