@@ -9,12 +9,14 @@ workflow run_preprocess {
         File genotype_samples_to_keep_file
         File imputed_samples_to_keep_file
         File covariate_tsv_file
+        File imputed_list_of_files  
+        File impute_file_format 
 
         String covar_sampleID_colname
     
         File? chain_file
-        File? imputed_list_of_vcf_file
-        File? imputed_list_of_bgen_file
+        #File? imputed_list_of_vcf_file
+        #File? imputed_list_of_bgen_file
         #File? imputed_list_of_bgen_index_file
 
         String? dosageField
@@ -74,15 +76,15 @@ workflow run_preprocess {
     	    genotype_bed = run_ld_prune.genotype_pruned_bed,
     	    genotype_bim = run_ld_prune.genotype_pruned_bim,
     	    genotype_fam = run_ld_prune.genotype_pruned_fam,
-            chain_file = select_first([chain_file, "null"])
+            chain_file = select_first([chain_file])
         }
     }
 
     
     
-    if (defined(imputed_list_of_vcf_file) && imputed_list_of_vcf_file!="") {
+    if (impute_file_format == "vcf") {
 
-        Array[Array[File]] imputed_files = read_tsv(select_first([imputed_list_of_vcf_file]))
+        Array[Array[File]] imputed_files = read_tsv(imputed_list_of_files)
 
         scatter (imputed_file in imputed_files) {
 	        call vcf_to_bgen {
@@ -102,8 +104,8 @@ workflow run_preprocess {
 
     }  
     
-    if (defined(imputed_list_of_bgen_file)) {
-        Array[Array[File]]  bgen_file_list = read_tsv(select_first([imputed_list_of_bgen_file]))
+    if (impute_file_format == "bgen") {
+        Array[Array[File]]  bgen_file_list = read_tsv(imputed_list_of_files)
     }
 
 
@@ -117,7 +119,7 @@ workflow run_preprocess {
           #File genotype_pruned_pca_eigenvec = plink_pca.genotype_pruned_pca_eigenvec
           #Array[File] bgen_files = select_first([vcf_to_bgen.out_bgen, imputed_bgen_files])
           #Array[File] bgen_file_indices = select_first([index_bgen_file.bgen_file_index, imputed_bgen_index_files])
-          Array[Array[File]] bgen_files_and_indices = select_first([converted_bgen_file_list,bgen_file_list, ""])          
+          Array[Array[File]] bgen_files_and_indices = select_first([converted_bgen_file_list,bgen_file_list])          
           #File bgen_paths_file = select_first([imputed_list_of_bgen_file,get_bgen_file_paths.merged_file])
           File bgen_samples = select_first([bgen_file_saige_sample, imputed_samples_to_keep_file])
           File plink_subset_samples = get_cohort_samples.plink_subset_samples

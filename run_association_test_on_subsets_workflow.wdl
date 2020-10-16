@@ -78,6 +78,8 @@ workflow run_association_test {
         File genotype_fam = batch_tbl["genotype_fam"][idx]
         File genotype_samples_to_keep_file = batch_tbl["genotype_samples_to_keep_file"][idx]
         File imputed_samples_to_keep_file = batch_tbl["imputed_samples_to_keep_file"][idx]
+        File imputed_list_of_files = batch_tbl["imputed_list_of_files"][idx]
+        String impute_file_format = batch_tbl["impute_file_format"][idx]
 
         String batch_name = batch_tbl["batch_name"][idx] 
 
@@ -92,8 +94,8 @@ workflow run_association_test {
                     imputed_samples_to_keep_file = imputed_samples_to_keep_file,
                     covariate_tsv_file = covar_subset_file,
                     covar_sampleID_colname = covar_sampleID_colname,
-                    imputed_list_of_vcf_file =  if defined(imputed_list_of_vcf_file) then select_first([imputed_list_of_vcf_file]) else None,  
-                    imputed_list_of_bgen_file = if defined(imputed_list_of_bgen_file) then select_first([imputed_list_of_bgen_file]) else None,  
+                    imputed_list_of_files = imputed_list_of_files, 
+                    impute_file_format = impute_file_format,
                     chain_file = chain_file,
                     id_delim = id_delim
             }
