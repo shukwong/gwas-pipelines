@@ -55,6 +55,8 @@ workflow run_meta_analysis {
                 covariate_tsv_file = covariate_tsv_file,
                 variable_info_tsv_file = variable_info_tsv_file,
                 sample_sets_json_file = sample_sets_json_file,
+                imputed_list_of_files = imputed_list_of_files,
+                impute_file_format = impute_file_format,
 
                 useBOLT = useBOLT,
                 useSAIGE = useSAIGE,
@@ -107,7 +109,7 @@ task run_metal {
                         PROCESSFILE /mnt/projects/plco/bq_bmi_curr_co.GSA_batch2.boltlmm.rawids.tsv
                         PROCESSFILE /mnt/projects/plco/bq_bmi_curr_co.Oncoarray.boltlmm.rawids.tsv
      
-        metal_command=${metal_command} +  "OUTFILE " + {prefix} +  ".metal.tsv\n \
+        metal_command=${metal_command} +  "OUTFILE " + ~{prefix} +  ".metal.tsv\n \
                      ANALYZE HETEROGENEITY\n \
                      QUIT"
 
