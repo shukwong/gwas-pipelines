@@ -1,5 +1,4 @@
-
- version development
+version development
 
  # import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/tasks/preprocess_workflow.wdl" as preprocess
  # import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/tasks/saige_workflow.wdl" as saige
@@ -11,14 +10,14 @@ import "./tasks/bolt_workflow.wdl" as bolt
 
 workflow run_association_test {
     input {
- #   File genotype_bed
- #   File genotype_bim
- #   File genotype_fam
+    File genotype_bed
+    File genotype_bim
+    File genotype_fam
 
- #   File genotype_samples_to_keep_file
- #   File imputed_samples_to_keep_file
+    File genotype_samples_to_keep_file
+    File imputed_samples_to_keep_file
 
-    File batch_tsv_file 
+#    File batch_tsv_file 
     File covariate_tsv_file
     File variable_info_tsv_file
     File sample_sets_json_file
@@ -38,6 +37,8 @@ workflow run_association_test {
 
     #File? imputed_list_of_vcf_file
     #File? imputed_list_of_bgen_file
+    File imputed_list_of_files
+    String impute_file_format
     File? chain_file
 
     String? id_delim #delim character for vcf file, if not defined, double ID is assumed
@@ -63,68 +64,49 @@ workflow run_association_test {
     Array[String] phenotype_type_lines = read_lines(get_covar_subsets.phenotype_type_file)
     String phenotype_type = phenotype_type_lines[0]
 
-    #read in batch information. If there are more than 1 batch we will meta analyze the summary results
-    Array[Array[String]] batch_tsv = read_tsv(batch_tsv_file) 
-    Int n_batches = length(batch_tsv)
+    
 
-    scatter (idx in range(n_batches-1)) { 
-        Array[String] batch_tsv_rows = batch_tsv[(idx)] 
-    }
-    Map[String, Array[String]] batch_tbl = as_map(zip(batch_tsv[0], transpose(batch_tsv_rows)))
+    scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
+        call preprocess.run_preprocess {
+            input:
+                genotype_bed = genotype_bed,
+                genotype_bim = genotype_bim,
+                genotype_fam = genotype_fam,
 
-    scatter (idx in range(n_batches-1)) {
-        File genotype_bed = batch_tbl["genotype_bed"][idx]
-        File genotype_bim = batch_tbl["genotype_bim"][idx]
-        File genotype_fam = batch_tbl["genotype_fam"][idx]
-        File genotype_samples_to_keep_file = batch_tbl["genotype_samples_to_keep_file"][idx]
-        File imputed_samples_to_keep_file = batch_tbl["imputed_samples_to_keep_file"][idx]
-        File imputed_list_of_files = batch_tbl["imputed_list_of_files"][idx]
-        String impute_file_format = batch_tbl["impute_file_format"][idx]
+                genotype_samples_to_keep_file = genotype_samples_to_keep_file,
+                imputed_samples_to_keep_file = imputed_samples_to_keep_file,
+                covariate_tsv_file = covar_subset_file,
+                covar_sampleID_colname = covar_sampleID_colname,
+                imputed_list_of_files = imputed_list_of_files, 
+                impute_file_format = impute_file_format,
+                chain_file = chain_file,
+                id_delim = id_delim
+        }
 
-        String batch_name = batch_tbl["batch_name"][idx] 
+        Array[String] pcs_as_string_lines = read_lines(run_preprocess.pcs_as_string_file)
+        String pcs_as_string = pcs_as_string_lines[0]
 
-        scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
-            call preprocess.run_preprocess {
+        String setname = basename(covar_subset_file, "_covars.tsv")
+
+        if (defined(useSAIGE) && useSAIGE) {
+            call saige.run_saige {
                 input:
-                    genotype_bed = genotype_bed,
-                    genotype_bim = genotype_bim,
-                    genotype_fam = genotype_fam,
-
-                    genotype_samples_to_keep_file = genotype_samples_to_keep_file,
-                    imputed_samples_to_keep_file = imputed_samples_to_keep_file,
-                    covariate_tsv_file = covar_subset_file,
-                    covar_sampleID_colname = covar_sampleID_colname,
-                    imputed_list_of_files = imputed_list_of_files, 
-                    impute_file_format = impute_file_format,
-                    chain_file = chain_file,
-                    id_delim = id_delim
+                genotype_bed = run_preprocess.genotype_ready_bed,
+                genotype_bim = run_preprocess.genotype_ready_bim,
+                genotype_fam = run_preprocess.genotype_ready_fam,
+                bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
+                imputed_samples_file = run_preprocess.bgen_samples,
+                phenoCol = phenoCol,
+                phenotype_type = phenotype_type,
+                covar_file = run_preprocess.covar_file,
+                covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string,
+                setname = setname,
+                minMAF=minMAF,
+                minMAC=minMAC
             }
 
-            Array[String] pcs_as_string_lines = read_lines(run_preprocess.pcs_as_string_file)
-            String pcs_as_string = pcs_as_string_lines[0]
-
-            String setname = basename(covar_subset_file, "_covars.tsv")
-
-            if (defined(useSAIGE) && useSAIGE) {
-                call saige.run_saige {
+            call make_summary_plots as make_saige_plots {
                 input:
-                    genotype_bed = run_preprocess.genotype_ready_bed,
-                    genotype_bim = run_preprocess.genotype_ready_bim,
-                    genotype_fam = run_preprocess.genotype_ready_fam,
-                    #bgen_paths_file = run_preprocess.bgen_paths_file,
-                    bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
-                    imputed_samples_file = run_preprocess.bgen_samples,
-                    phenoCol = phenoCol,
-                    phenotype_type = phenotype_type,
-                    covar_file = run_preprocess.covar_file,
-                    covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string,
-                    setname = setname,
-                    minMAF=minMAF,
-                    minMAC=minMAC
-            }
-
-                call make_summary_plots as make_saige_plots {
-                    input:
                     association_summary_file = run_saige.merged_saige_file
                 }
             }
@@ -151,24 +133,24 @@ workflow run_association_test {
             call make_summary_plots as make_bolt_plots {
                     input: 
                     association_summary_file = bolt_workflow.imputed_stats_file
-                }
-            }    
+            }
+                
         }
     }
 
-	# output {
-    #    Array[File?] merged_saige_file = run_saige.merged_saige_file
-    #    Array[File?] merged_bolt_file = bolt_workflow.imputed_stats_file
-    #
-    #    Array[File?] saige_manhattan_plots =  make_saige_plots.manhattan_file
-    #    Array[File?] saige_manhattan_loglog_plots = make_saige_plots.manhattan_loglog_file
-    #    Array[File?] saige_qqplots = make_saige_plots.qqplot_file
+	output {
+       Array[File?] merged_saige_file = run_saige.merged_saige_file
+       Array[File?] merged_bolt_file = bolt_workflow.imputed_stats_file
+    
+       Array[File?] saige_manhattan_plots =  make_saige_plots.manhattan_file
+       Array[File?] saige_manhattan_loglog_plots = make_saige_plots.manhattan_loglog_file
+       Array[File?] saige_qqplots = make_saige_plots.qqplot_file
 
 
-    #    Array[File?] bolt_manhattan_plots =  make_bolt_plots.manhattan_file
-    #    Array[File?] bolt_manhattan_loglog_plots = make_bolt_plots.manhattan_loglog_file
-    #    Array[File?] bolt_qqplots = make_bolt_plots.qqplot_file
- 	#}
+       Array[File?] bolt_manhattan_plots =  make_bolt_plots.manhattan_file
+       Array[File?] bolt_manhattan_loglog_plots = make_bolt_plots.manhattan_loglog_file
+       Array[File?] bolt_qqplots = make_bolt_plots.qqplot_file
+ 	}
     
 
     meta {
