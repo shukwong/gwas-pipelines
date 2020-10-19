@@ -27,14 +27,14 @@ workflow run_meta_analysis {
 
     #read in batch information. If there are more than 1 batch we will meta analyze the summary results
     Array[Array[String]] batch_tsv = read_tsv(batch_tsv_file) 
-    Int n_batches = length(batch_tsv)
+    Int n_batches = length(batch_tsv)-1
 
-    scatter (idx in range(n_batches-1)) { 
-        Array[String] batch_tsv_rows = batch_tsv[(idx)] 
+    scatter (idx in range(n_batches)) { 
+        Array[String] batch_tsv_rows = batch_tsv[(idx+1)] 
     }
     Map[String, Array[String]] batch_tbl = as_map(zip(batch_tsv[0], transpose(batch_tsv_rows)))
 
-    scatter (idx in range(n_batches-1)) {
+    scatter (idx in range(n_batches)) {
         File genotype_bed = batch_tbl["genotype_bed"][idx]
         File genotype_bim = batch_tbl["genotype_bim"][idx]
         File genotype_fam = batch_tbl["genotype_fam"][idx]
