@@ -189,7 +189,7 @@ task run_genotype_qc_filter {
     runtime {
 	    docker: "quay.io/shukwong/plink_crossmap_bgen:8984373caf8b"
         memory: memory + " GiB"
-        disks: "local-disk " + disk + "HDD"
+        disks: "local-disk " + disk + " HDD"
         gpu: false
     }
 	
