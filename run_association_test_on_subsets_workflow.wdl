@@ -64,7 +64,12 @@ workflow run_association_test {
     Array[String] phenotype_type_lines = read_lines(get_covar_subsets.phenotype_type_file)
     String phenotype_type = phenotype_type_lines[0]
 
-    
+#    Int n_sets = length(get_covar_subsets.covar_subsets_files)
+#    scatter (idx in range(n_sets)) {
+#        File covar_subset_file = get_covar_subsets.covar_subsets_files[idx]
+#        String setname = basename(covar_subset_file, "_covars.tsv")
+#        Array[String] setnames = setname
+#    }
 
     scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
         call preprocess.run_preprocess {
@@ -136,9 +141,19 @@ workflow run_association_test {
             }
                 
         }
+
     }
 
+    #Map[String, File] saige_results_table = as_map(zip(batch_tsv[0], run_saige.merged_saige_file))
+    #Array[File] merged_saige_file = select_first([run_saige.merged_saige_file])
+    #Map[File, File] subset2saigeResults = as_map(zip(get_covar_subsets.covar_subsets_files, merged_saige_file))
+
+ 
 	output {
+       Array[Array[File?]] merged_saige_file_list = transpose([get_covar_subsets.covar_subsets_files, run_saige.merged_saige_file]) 
+       Array[Array[File?]] merged_bolt_file_list = transpose([get_covar_subsets.covar_subsets_files, bolt_workflow.imputed_stats_file]) 
+
+
        Array[File?] merged_saige_file = run_saige.merged_saige_file
        Array[File?] merged_bolt_file = bolt_workflow.imputed_stats_file
     
