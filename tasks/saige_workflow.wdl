@@ -7,7 +7,6 @@ workflow run_saige {
         File genotype_bim
         File genotype_fam
 
-    
         File imputed_samples_file
         File covar_file
 
@@ -177,16 +176,13 @@ task saige_step2_SPAtests {
 
         String file_prefix = basename(bgen_file, ".bgen") 
 
-    
-        String saige_output_file_name = file_prefix + ".txt"
-
 	    Int? memory = 64
 	    Int? disk = 500
         Int? threads = 64
         Int? preemptible_tries = 1 
     }
 
-	command {
+	command <<<
 
       step2_SPAtests.R \
         --bgenFile=~{bgen_file} \
@@ -198,14 +194,14 @@ task saige_step2_SPAtests {
         --GMMATmodelFile=~{gmmat_model_file} \
         --varianceRatioFile=~{variance_ratio_file} \
         --sparseSigmaFile=~{sparse_sigma_file} \
-        --SAIGEOutputFile=~{saige_output_file_name} \
+        --SAIGEOutputFile=~{file_prefix}.txt \
         --numLinesOutput=2 \
         --IsOutputNinCaseCtrl=TRUE \
         --IsOutputHetHomCountsinCaseCtrl=TRUE \
         --IsOutputAFinCaseCtrl=TRUE
 
         gzip ~{saige_output_file_name}
-	}
+	>>>
 
 	runtime {
 		docker: "wzhou88/saige:0.38"
@@ -216,7 +212,7 @@ task saige_step2_SPAtests {
 	}
 
 	output {
-		File saige_output_file = saige_output_file_name + ".gz"
+		File saige_output_file = file_prefix + "txt.gz"
 	}
 }
 
