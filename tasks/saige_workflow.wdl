@@ -200,7 +200,7 @@ task saige_step2_SPAtests {
         --IsOutputHetHomCountsinCaseCtrl=TRUE \
         --IsOutputAFinCaseCtrl=TRUE
 
-        gzip ~{saige_output_file_name}
+        gzip ~{file_prefix}.txt
 	>>>
 
 	runtime {
