@@ -73,7 +73,8 @@ workflow run_meta_analysis {
                 id_delim = id_delim
 
         }
-    }    
+    }  
+
 }
 
 task run_metal {
