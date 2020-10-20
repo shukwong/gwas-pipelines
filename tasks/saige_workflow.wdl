@@ -1,4 +1,3 @@
-
 version development
 
 workflow run_saige {
@@ -212,7 +211,7 @@ task saige_step2_SPAtests {
 	}
 
 	output {
-		File saige_output_file = file_prefix + "txt.gz"
+		File saige_output_file = file_prefix + ".txt.gz"
 	}
 }
 
