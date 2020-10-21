@@ -4,20 +4,18 @@ version development
  # import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/tasks/saige_workflow.wdl" as saige
  # import "https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/tasks/bolt_workflow.wdl" as bolt
 
-import "./tasks/preprocess_workflow.wdl" as preprocess
-import "./tasks/saige_workflow.wdl" as saige
-import "./tasks/bolt_workflow.wdl" as bolt
+import "run_meta_analysis_workflow.wdl" as meta_analysis
 
-workflow run_association_test {
+workflow gwas_subsets {
     input {
-    File genotype_bed
-    File genotype_bim
-    File genotype_fam
+    #File genotype_bed
+    #File genotype_bim
+    #File genotype_fam
 
-    File genotype_samples_to_keep_file
-    File imputed_samples_to_keep_file
+    #File genotype_samples_to_keep_file
+    #File imputed_samples_to_keep_file
 
-#    File batch_tsv_file 
+    File batch_tsv_file 
     File covariate_tsv_file
     File variable_info_tsv_file
     File sample_sets_json_file
@@ -35,20 +33,17 @@ workflow run_association_test {
     Float? minMAF=0.001
     Float? minMAC=1
 
-    #File? imputed_list_of_vcf_file
-    #File? imputed_list_of_bgen_file
-    File imputed_list_of_files
-    String impute_file_format
     File? chain_file
 
     String? id_delim #delim character for vcf file, if not defined, double ID is assumed
+    String? dosageField
     }
     #read subset information
     call get_covar_subsets {
         input:
-        covariate_tsv_file = covariate_tsv_file, 
-        variable_info_tsv_file = variable_info_tsv_file, 
-        sample_sets_json_file = sample_sets_json_file
+            covariate_tsv_file = covariate_tsv_file, 
+            variable_info_tsv_file = variable_info_tsv_file, 
+            sample_sets_json_file = sample_sets_json_file
     }
     Array[String] binary_covar_list_lines  = read_lines(get_covar_subsets.binary_covar_list_file)
     String binary_covar_list = binary_covar_list_lines[0]
@@ -64,107 +59,41 @@ workflow run_association_test {
     Array[String] phenotype_type_lines = read_lines(get_covar_subsets.phenotype_type_file)
     String phenotype_type = phenotype_type_lines[0]
 
-#    Int n_sets = length(get_covar_subsets.covar_subsets_files)
-#    scatter (idx in range(n_sets)) {
-#        File covar_subset_file = get_covar_subsets.covar_subsets_files[idx]
-#        String setname = basename(covar_subset_file, "_covars.tsv")
-#        Array[String] setnames = setname
-#    }
-
     scatter (covar_subset_file in get_covar_subsets.covar_subsets_files) {
-        call preprocess.run_preprocess {
-            input:
-                genotype_bed = genotype_bed,
-                genotype_bim = genotype_bim,
-                genotype_fam = genotype_fam,
-
-                genotype_samples_to_keep_file = genotype_samples_to_keep_file,
-                imputed_samples_to_keep_file = imputed_samples_to_keep_file,
-                covariate_tsv_file = covar_subset_file,
-                covar_sampleID_colname = covar_sampleID_colname,
-                imputed_list_of_files = imputed_list_of_files, 
-                impute_file_format = impute_file_format,
-                chain_file = chain_file,
-                id_delim = id_delim
-        }
-
-        Array[String] pcs_as_string_lines = read_lines(run_preprocess.pcs_as_string_file)
-        String pcs_as_string = pcs_as_string_lines[0]
-
         String setname = basename(covar_subset_file, "_covars.tsv")
-
-        if (defined(useSAIGE) && useSAIGE) {
-            call saige.run_saige {
-                input:
-                genotype_bed = run_preprocess.genotype_ready_bed,
-                genotype_bim = run_preprocess.genotype_ready_bim,
-                genotype_fam = run_preprocess.genotype_ready_fam,
-                bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
-                imputed_samples_file = run_preprocess.bgen_samples,
+        call meta_analysis.run_meta_analysis {
+            input:
+                batch_tsv_file = batch_tsv_file,
+                covariate_tsv_file = covariate_tsv_file,
+                variable_info_tsv_file = variable_info_tsv_file,
+                binary_covar_list = binary_covar_list,
+                continuous_covar_list = continuous_covar_list,
                 phenoCol = phenoCol,
+                covar_sampleID_colname = covar_sampleID_colname,
                 phenotype_type = phenotype_type,
-                covar_file = run_preprocess.covar_file,
-                covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string,
-                setname = setname,
-                minMAF=minMAF,
-                minMAC=minMAC
-            }
+                setname  = setname,
 
-            call make_summary_plots as make_saige_plots {
-                input:
-                    association_summary_file = run_saige.merged_saige_file
-                }
-            }
+                useBOLT = useBOLT,
+                useSAIGE = useSAIGE,
 
-            if (defined(useBOLT) && useBOLT ) {
-                call bolt.bolt_workflow {
-                input: 
-                    genotype_bed = run_preprocess.genotype_ready_bed,
-	                genotype_bim = run_preprocess.genotype_ready_bim,
-	                genotype_fam = run_preprocess.genotype_ready_fam,
-                    pheno_file = run_preprocess.covar_file,
-                    ld_scores_file = select_first([ld_scores_file]),
-                    genetic_map_file = select_first([genetic_map_file]),
-                    #imputed_samples_file = run_preprocess.bgen_samples,
-                    covar_file = run_preprocess.covar_file,
-                    #bgen_list_file = run_preprocess.bgen_paths_file,
-                    bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
-                    pheno_col = phenoCol,
-                    qCovarCol = continuous_covar_list + "," + pcs_as_string,
-                    setname = setname,
-                    minMAF = minMAF
-                }
+                genetic_map_file = genetic_map_file,
+                ld_scores_file = ld_scores_file,
+    
+                minMAF = minMAF,
+                minMAC = minMAC,
 
-            call make_summary_plots as make_bolt_plots {
-                    input: 
-                    association_summary_file = bolt_workflow.imputed_stats_file
-            }
-                
+                chain_file = chain_file,
+
+                id_delim = id_delim,
+                dosageField = dosageField
         }
 
     }
 
-    #Map[String, File] saige_results_table = as_map(zip(batch_tsv[0], run_saige.merged_saige_file))
-    #Array[File] merged_saige_file = select_first([run_saige.merged_saige_file])
-    #Map[File, File] subset2saigeResults = as_map(zip(get_covar_subsets.covar_subsets_files, merged_saige_file))
-
  
 	output {
-       Array[Array[File?]] merged_saige_file_list = transpose([get_covar_subsets.covar_subsets_files, run_saige.merged_saige_file]) 
-       Array[Array[File?]] merged_bolt_file_list = transpose([get_covar_subsets.covar_subsets_files, bolt_workflow.imputed_stats_file]) 
-
-
-       Array[File?] merged_saige_file = run_saige.merged_saige_file
-       Array[File?] merged_bolt_file = bolt_workflow.imputed_stats_file
-    
-       Array[File?] saige_manhattan_plots =  make_saige_plots.manhattan_file
-       Array[File?] saige_manhattan_loglog_plots = make_saige_plots.manhattan_loglog_file
-       Array[File?] saige_qqplots = make_saige_plots.qqplot_file
-
-
-       Array[File?] bolt_manhattan_plots =  make_bolt_plots.manhattan_file
-       Array[File?] bolt_manhattan_loglog_plots = make_bolt_plots.manhattan_loglog_file
-       Array[File?] bolt_qqplots = make_bolt_plots.qqplot_file
+       Array[File?] merged_saige_file_list = run_meta_analysis.bolt_metal_output_file 
+       Array[File?] merged_bolt_file_list = run_meta_analysis.saige_metal_output_file
  	}
     
 
@@ -173,27 +102,6 @@ workflow run_association_test {
 		email : "wendy.wong@gmail.com"
 		description : "Biobank scale association study with mutiple subsets (sample target variable)."
 	}
-
-    parameter_meta {
-        genotype_bed : "plink bed file for direct genotypes"
-        genotype_bim : "plink bim file for direct genotypes"
-        genotype_fam : "plink fam file for direct genotypes"
-        genotype_samples_to_keep_file :  "Listing the samples to be kept in the genotype file. Expected first two columns to be FID and IID."
-        imputed_samples_to_keep_file : "Listing the samples to be kept in the imputed file. Expected just one column"
-        covariate_tsv_file : "File that contains phenotype and covariates information of the samples"
-        variable_info_tsv_file : "variable information"
-        sample_sets_json_file : "sample json file to specify sample sets"
-        phenoCol : "phenotype (target) column name"
-        covar_sampleID_colname : "The sampleID column name for the covar file, default is IID"
-        chain_file : "Optional: A liftover chain file to convert the genome build of the genotype files (in Plink) to another build"
-        imputed_list_of_vcf_file : "Optional: A file that contains the file locations of imputed VCFs. They will be converted to bgen. Either this file or the list of bgen and bgen index files are required"
-        imputed_list_of_bgen_file : "Optional: A file that contains the file locations of imputed bgen files"
-        imputed_list_of_bgen_index_file : "Optional: A file that contains the file locations of imputed bgen index files. This needs to be in same order as the imputed_list_of_bgen_file. Will do it this way until the as_map() function works as expected."
-        ld_scores_file : "ld scores file for BOLT"
-        genetic_map_file : "genetic map file for BOLT"
-        useBOLT : "true or false for whether to run BOLT"
-        useSAIGE : "true or false for whether to run SAIGE"
-    }
 
 }
 

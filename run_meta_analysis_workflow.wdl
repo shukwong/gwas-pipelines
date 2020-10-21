@@ -1,6 +1,6 @@
 version development
 
-import "./run_association_test_on_subsets_workflow.wdl" as run_association_test 
+import "./run_association_test_workflow.wdl" as run_association_test 
 
 
 workflow run_meta_analysis {
@@ -8,7 +8,13 @@ workflow run_meta_analysis {
         File batch_tsv_file 
         File covariate_tsv_file
         File variable_info_tsv_file
-        File sample_sets_json_file
+
+        String binary_covar_list
+        String continuous_covar_list 
+        String phenoCol 
+        String covar_sampleID_colname
+        String phenotype_type
+        String setname 
 
         Boolean? useBOLT
         Boolean? useSAIGE
@@ -23,6 +29,7 @@ workflow run_meta_analysis {
         File? chain_file
 
         String? id_delim #delim character for vcf file, if not defined, double ID is assumed
+        String? dosageField
     }
 
     #read in batch information. If there are more than 1 batch we will meta analyze the summary results
@@ -53,8 +60,6 @@ workflow run_meta_analysis {
                 genotype_samples_to_keep_file = genotype_samples_to_keep_file,
                 imputed_samples_to_keep_file = imputed_samples_to_keep_file,
                 covariate_tsv_file = covariate_tsv_file,
-                variable_info_tsv_file = variable_info_tsv_file,
-                sample_sets_json_file = sample_sets_json_file,
                 imputed_list_of_files = imputed_list_of_files,
                 impute_file_format = impute_file_format,
 
@@ -70,19 +75,49 @@ workflow run_meta_analysis {
 
                 chain_file = chain_file,
 
-                id_delim = id_delim
+                id_delim = id_delim,
 
+                binary_covar_list = binary_covar_list,
+                continuous_covar_list = continuous_covar_list,
+                phenoCol = phenoCol,
+                covar_sampleID_colname = covar_sampleID_colname,
+                phenotype_type = phenotype_type,
+                setname = setname,
+                dosageField = dosageField
         }
     }  
 
+    if (defined(useBOLT) && useBOLT ) {
+        call run_metal as run_metal_bolt {
+            input:
+                association_summary_files = run_association_test.merged_bolt_file, 
+                prefix = setname,
+                FREQLABEL = "A1FREQ"
+        }
+    }
+
+    if (defined(useSAIGE) && useSAIGE ) {
+        call run_metal as run_metal_saige {
+            input:
+                association_summary_files = run_association_test.merged_saige_file, 
+                prefix = setname,
+                FREQLABEL = ""
+        }
+    }
+
+    output {
+        File? bolt_metal_output_file =  run_metal_bolt.metal_output_file
+        File? saige_metal_output_file =  run_metal_saige.metal_output_file
+    }
 }
 
+#TODO: add allele frequency for saige
 task run_metal {
     input {
     Array[File] association_summary_files
     String prefix 
 
-    String? FREQLABEL = "Freq_Tested_Allele_in_TOPMed"
+    String FREQLABEL
     String? MARKERLABEL = "SNP"
    
 
@@ -93,29 +128,31 @@ task run_metal {
     }
 
      command <<<
-        metal_command="MARKERLABEL SNP\n \
+        set -euo pipefail
+
+        process_files=$(echo ~{association_summary_files} | awk '{print ", "$0}' |  sed 's/,/PROCESSFILE /g')
+
+        #FREQLABEL ~{FREQLABEL} \
+        #AVERAGEFREQ ON \
+        #MINMAXFREQ ON \
+
+
+        echo MARKERLABEL ~{MARKERLABEL} \
                         ALLELELABELS Tested_Allele Other_Allele \
-                        EFFECTLABEL BETA
-                        STDERRLABEL SE
-                        FREQLABEL Freq_Tested_Allele_in_TOPMed
-                        CUSTOMVARIABLE TotalSampleSize
-                        LABEL TotalSampleSize as N
-                        SCHEME STDERR
-                        GENOMICCONTROL ON
-                        AVERAGEFREQ ON
-                        MINMAXFREQ ON\n"
+                        EFFECTLABEL BETA \
+                        STDERRLABEL SE \
+                        CUSTOMVARIABLE TotalSampleSize \
+                        LABEL TotalSampleSize as N \
+                        SCHEME STDERR \
+                        GENOMICCONTROL ON \
+                        ${process_files} \
+                        OUTFILE ~{prefix}.metal.tsv \
+                        ANALYZE HETEROGENEITY\n \
+                        QUIT >metal_command
 
+        metal < metal_command
 
-                        PROCESSFILE /mnt/projects/plco/bq_bmi_curr_co.GSA_batch1.boltlmm.rawids.tsv
-                        PROCESSFILE /mnt/projects/plco/bq_bmi_curr_co.GSA_batch2.boltlmm.rawids.tsv
-                        PROCESSFILE /mnt/projects/plco/bq_bmi_curr_co.Oncoarray.boltlmm.rawids.tsv
-     
-        metal_command=${metal_command} +  "OUTFILE " + ~{prefix} +  ".metal.tsv\n \
-                     ANALYZE HETEROGENEITY\n \
-                     QUIT"
-
-
-        metal < ${metal_command}
+        gzip ~{prefix}.metal.tsv
     >>>
 
     runtime {
@@ -127,6 +164,6 @@ task run_metal {
 	}
 
     output {
-        File metal_output_file =  "${prefix}.metal.tsv"
+        File metal_output_file =  prefix + ".metal.tsv.gz"
     }
 }
