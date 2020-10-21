@@ -315,8 +315,7 @@ task vcf_to_bgen {
 
         Int? bits=8
         Int? memory = 32
-        Int? memory_in_MB = 30000
-        Int? disk = 100
+        Int? disk = 500
         Int? threads = 4
 
         String prefix = basename(vcf_file, ".vcf.gz")
