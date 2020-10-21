@@ -64,7 +64,7 @@ workflow gwas_subsets {
         call meta_analysis.run_meta_analysis {
             input:
                 batch_tsv_file = batch_tsv_file,
-                covariate_tsv_file = covariate_tsv_file,
+                covariate_tsv_file = covar_subset_file,
                 variable_info_tsv_file = variable_info_tsv_file,
                 binary_covar_list = binary_covar_list,
                 continuous_covar_list = continuous_covar_list,
