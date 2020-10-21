@@ -316,12 +316,17 @@ task vcf_to_bgen {
         Int? bits=8
         Int? memory = 32
         Int? disk = 500
+
         Int? threads = 4
 
         String prefix = basename(vcf_file, ".vcf.gz")
 
         String plink_id_delim_option = if defined (id_delim) then "--id-delim " + id_delim else "--double-id"
     }
+
+    #to figure out the disk size based on the vcf file size
+    Float vcf_file_size = size(vcf_file, "GiB")
+    Int disk_size = select_first([disk, ceil(vcf_file_size * 4)])
 
 	command <<<
         set -euo pipefail
@@ -344,7 +349,7 @@ task vcf_to_bgen {
 	runtime {
 		docker: "quay.io/shukwong/plink_crossmap_bgen:8984373caf8b"
 		memory: memory + " GB"
-		disks: "local-disk " + disk + " HDD"
+		disks: "local-disk " + disk_size + " HDD"
         cpu: threads
 		gpu: false
 	}
