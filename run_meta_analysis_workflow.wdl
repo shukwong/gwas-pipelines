@@ -130,7 +130,8 @@ task run_metal {
      command <<<
         set -euo pipefail
 
-        process_files=$(echo ~{association_summary_files} | awk '{print ", "$0}' |  sed 's/,/PROCESSFILE /g')
+        #process_files=$(echo ~{association_summary_files} | awk '{print ", "$0}' |  sed 's/,/PROCESSFILE /g')
+        process_files=~{sep=" PROCESSFILE " association_summary_files} 
 
         #FREQLABEL ~{FREQLABEL} \
         #AVERAGEFREQ ON \
