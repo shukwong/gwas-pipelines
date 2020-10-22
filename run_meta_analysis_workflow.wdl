@@ -131,14 +131,14 @@ task run_metal {
         set -euo pipefail
 
         #process_files=$(echo ~{association_summary_files} | awk '{print ", "$0}' |  sed 's/,/PROCESSFILE /g')
-        process_files=~{sep=" PROCESSFILE " association_summary_files} 
+        #process_files=~{sep=" PROCESSFILE " association_summary_files} 
 
         #FREQLABEL ~{FREQLABEL} \
         #AVERAGEFREQ ON \
         #MINMAXFREQ ON \
 
 
-        echo MARKERLABEL ~{MARKERLABEL} \
+        echo MARKERLABEL "~{MARKERLABEL} \
                         ALLELELABELS Tested_Allele Other_Allele \
                         EFFECTLABEL BETA \
                         STDERRLABEL SE \
@@ -146,10 +146,10 @@ task run_metal {
                         LABEL TotalSampleSize as N \
                         SCHEME STDERR \
                         GENOMICCONTROL ON \
-                        ${process_files} \
+                        ~{sep=" PROCESSFILE " association_summary_files}  \
                         OUTFILE ~{prefix}.metal.tsv \
                         ANALYZE HETEROGENEITY\n \
-                        QUIT >metal_command
+                        QUIT" >metal_command
 
         metal < metal_command
 
