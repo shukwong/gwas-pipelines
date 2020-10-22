@@ -129,8 +129,8 @@ workflow run_association_test {
 
  
 	output {
-       File merged_saige_file = select_first([run_saige.merged_saige_file])
-       File merged_bolt_file = select_first([bolt_workflow.imputed_stats_file])
+       File merged_saige_file = select_first([run_saige.merged_saige_file, "null"])
+       File merged_bolt_file = select_first([bolt_workflow.imputed_stats_file, "null"])
     
        File? saige_manhattan_plot =  make_saige_plots.manhattan_file
        File? saige_manhattan_loglog_plot = make_saige_plots.manhattan_loglog_file
