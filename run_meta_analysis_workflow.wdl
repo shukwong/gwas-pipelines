@@ -138,7 +138,7 @@ task run_metal {
         #MINMAXFREQ ON \
 
 
-        echo MARKERLABEL ~{MARKERLABEL} \
+        echo "MARKERLABEL ~{MARKERLABEL} \
                         ALLELELABELS Tested_Allele Other_Allele \
                         EFFECTLABEL BETA \
                         STDERRLABEL SE \
@@ -146,7 +146,7 @@ task run_metal {
                         LABEL TotalSampleSize as N \
                         SCHEME STDERR \
                         GENOMICCONTROL ON \
-                        ~{sep=" PROCESSFILE " association_summary_files}  \
+                        ~{sep=' PROCESSFILE ' association_summary_files}  \
                         OUTFILE ~{prefix}.metal.tsv \
                         ANALYZE HETEROGENEITY\n \
                         QUIT" >metal_command
