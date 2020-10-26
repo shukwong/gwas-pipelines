@@ -138,7 +138,7 @@ task run_metal {
         #MINMAXFREQ ON \
 
 
-        echo MARKERLABEL "~{MARKERLABEL} \
+        echo MARKERLABEL ~{MARKERLABEL} \
                         ALLELELABELS Tested_Allele Other_Allele \
                         EFFECTLABEL BETA \
                         STDERRLABEL SE \
