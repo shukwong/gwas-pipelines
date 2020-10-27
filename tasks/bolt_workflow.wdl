@@ -23,15 +23,10 @@ workflow bolt_workflow {
         Float? minMAF
     }
 
+    Array[String] Pheno_tsv = read_lines(pheno_file)
+    Int n_samples = length(Pheno_tsv)-1
+
     scatter (bgen_file_line in bgen_files_and_indices) {
-
-        # call subset_bgen_from_genotype {
-        #     input:
-        #         plink_fam_file = genotype_fam,
-        #         bgen_file = bgen_file_line[0],
-        #         imputed_samples_file = imputed_samples_file
-
-        # }
 
         call bgen_get_samples_file {
             input: bgen_file = bgen_file_line[0]
@@ -63,7 +58,8 @@ workflow bolt_workflow {
         input: 
            imputed_stats_files = run_bolt_lmm.imputed_stats_file, 
            pheno_col = pheno_col,
-           setname = setname
+           setname = setname,
+           n_samples = n_samples
     }
 
     output {
@@ -78,6 +74,7 @@ task combine_bolt_results {
         Array[File] imputed_stats_files
         String pheno_col
         String setname
+        Int n_samples
 
         Int? memory = 4
 	    Int? disk = 100
@@ -88,11 +85,13 @@ task combine_bolt_results {
     command <<<
         set -euo pipefail
 
+        N=~{n_samples}
+
         #echo -e "SNP\tCHR\tBP\tGENPOS\tALLELE1\tALLELE0\tA1FREQ\tINFO\tCHISQ_LINREG\tP_LINREG\tBETA\tSE\tCHISQ_BOLT_LMM_INF\tP_BOLT_LMM_INF\tCHISQ_BOLT_LMM\tP_BOLT_LMM" > bolt_~{pheno_col}_results_merged.tsv
         
-        echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP" > bolt_~{setname}_~{pheno_col}_results_merged.tsv
+        echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP\tN" > bolt_~{setname}_~{pheno_col}_results_merged.tsv
 
-        cat ~{sep=' ' imputed_stats_files} | gzip -d | grep -v ^SNP | awk '{print $2"\t"$3"\t"$1"\t"$5"\t"$6"\t"$11"\t"$12"\t"$14}' >> bolt_~{setname}_~{pheno_col}_results_merged.tsv
+        cat ~{sep=' ' imputed_stats_files} | gzip -d | grep -v ^SNP | awk -v N_var=$N '{print $2"\t"$3"\t"$1"\t"$5"\t"$6"\t"$11"\t"$12"\t"$14"\t"N_var}' >> bolt_~{setname}_~{pheno_col}_results_merged.tsv
         
         gzip bolt_~{setname}_~{pheno_col}_results_merged.tsv
     >>>
