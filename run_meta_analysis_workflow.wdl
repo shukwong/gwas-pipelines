@@ -138,7 +138,7 @@ task run_metal {
                         LABEL TotalSampleSize as N \
                         SCHEME STDERR \
                         GENOMICCONTROL ON \
-                        ~{sep=' PROCESSFILE ' association_summary_files}  \
+                        PROCESSFILE ~{sep=' PROCESSFILE ' association_summary_files}  \
                         OUTFILE ~{prefix}.metal.tsv \
                         ANALYZE HETEROGENEITY \
                         QUIT" > metal_command
