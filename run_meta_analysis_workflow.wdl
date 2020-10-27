@@ -107,7 +107,9 @@ workflow run_meta_analysis {
 
     output {
         File? bolt_metal_output_file =  run_metal_bolt.metal_output_file
+        File? bolt_metal_info_file = run_metal_bolt.metal_info_file
         File? saige_metal_output_file =  run_metal_saige.metal_output_file
+        File? saige_metal_info_file = run_metal_saige.metal_info_file
     }
 }
 
@@ -138,13 +140,16 @@ CUSTOMVARIABLE TotalSampleSize \n \
 LABEL TotalSampleSize as N \n \
 SCHEME STDERR \n \
 GENOMICCONTROL ON \n \
-PROCESSFILE ~{sep=' PROCESSFILE ' association_summary_files}  \n\
-OUTFILE ~{prefix}.metal.tsv \n\
+PROCESSFILE ~{sep=',PROCESSFILE ' association_summary_files}  \n\
+OUTFILE ~{prefix}.metal .tsv \n\
 ANALYZE HETEROGENEITY \n\
 QUIT" > metal_command
 
+        sed -i 's/,/\n/' metal_command
         metal metal_command
 
+        mv ~{prefix}.metal1.tsv ~{prefix}.metal1.tsv
+        mv ~{prefix}.metal1.tsv.info ~{prefix}.metal.tsv.info
         gzip ~{prefix}.metal.tsv
     >>>
 
@@ -158,5 +163,6 @@ QUIT" > metal_command
 
     output {
         File metal_output_file =  prefix + ".metal.tsv.gz"
+        File metal_info_file = prefix + ".metal.tsv.info"
     }
 }
