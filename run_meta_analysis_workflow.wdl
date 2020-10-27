@@ -130,17 +130,17 @@ task run_metal {
      command <<<
         set -euo pipefail
 
-        echo "MARKERLABEL ~{MARKERLABEL} \
-                        ALLELELABELS Tested_Allele Other_Allele \
-                        EFFECTLABEL BETA \
-                        STDERRLABEL SE \
-                        CUSTOMVARIABLE TotalSampleSize \
-                        LABEL TotalSampleSize as N \
-                        SCHEME STDERR \
-                        GENOMICCONTROL ON \
-                        PROCESSFILE ~{sep=' PROCESSFILE ' association_summary_files}  \
-                        OUTFILE ~{prefix}.metal.tsv \
-                        ANALYZE HETEROGENEITY \
+        echo -e "MARKERLABEL ~{MARKERLABEL} \n \
+                        ALLELELABELS Tested_Allele Other_Allele \n \
+                        EFFECTLABEL BETA \n \
+                        STDERRLABEL SE \n \
+                        CUSTOMVARIABLE TotalSampleSize \n \
+                        LABEL TotalSampleSize as N \n \
+                        SCHEME STDERR \n \
+                        GENOMICCONTROL ON \n \
+                        PROCESSFILE ~{sep='\n PROCESSFILE ' association_summary_files}  \n\
+                        OUTFILE ~{prefix}.metal.tsv \n\
+                        ANALYZE HETEROGENEITY \n\
                         QUIT" > metal_command
 
 
