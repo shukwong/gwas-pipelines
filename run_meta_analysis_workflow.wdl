@@ -148,7 +148,7 @@ QUIT" > metal_command
         sed -i 's/,/\n/' metal_command
         metal metal_command
 
-        mv ~{prefix}.metal1.tsv ~{prefix}.metal1.tsv
+        mv ~{prefix}.metal1.tsv ~{prefix}.metal.tsv
         mv ~{prefix}.metal1.tsv.info ~{prefix}.metal.tsv.info
         gzip ~{prefix}.metal.tsv
     >>>
