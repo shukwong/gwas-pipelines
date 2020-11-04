@@ -1,7 +1,7 @@
 version development
 
 import "./run_association_test_workflow.wdl" as run_association_test 
-
+import "./tasks/preprocess_workflow.wdl" as gwas_tasks
 
 workflow run_meta_analysis {
     input {
@@ -94,6 +94,15 @@ workflow run_meta_analysis {
                 prefix = setname,
                 FREQLABEL = "A1FREQ"
         }
+
+        call gwas_tasks.make_summary_plots as make_bolt_plots {
+            input: 
+                association_summary_file = run_metal_bolt.metal_output_file,
+                BP_column = "POS",
+                CHR_column = "CHR",
+                pval_col = "P-value",
+                minrep_col = "MarkerName",
+        } 
     }
 
     if (defined(useSAIGE) && useSAIGE ) {
@@ -103,11 +112,23 @@ workflow run_meta_analysis {
                 prefix = setname,
                 FREQLABEL = ""
         }
+
+        call gwas_tasks.make_summary_plots as make_sage_plots {
+            input: 
+                association_summary_file = run_metal_saige.metal_output_file,
+                BP_column = "POS",
+                CHR_column = "CHR",
+                pval_col = "P-value",
+                minrep_col = "MarkerName",
+        } 
+
     }
 
     output {
         File? bolt_metal_output_file =  run_metal_bolt.metal_output_file
         File? bolt_metal_info_file = run_metal_bolt.metal_info_file
+        File? bolt_metal_manhattan_file = make_bolt_plots.manhattan_file
+        File? bolt_metal_qqplot_file = make_bolt_plots.qqplot_file
         File? saige_metal_output_file =  run_metal_saige.metal_output_file
         File? saige_metal_info_file = run_metal_saige.metal_info_file
     }
@@ -132,6 +153,8 @@ task run_metal {
      command <<<
         set -euo pipefail
 
+        wget https://raw.githubusercontent.com/shukwong/gwas-pipelines/master/scripts/process_metal_outputs.R
+
         echo -e "MARKERLABEL ~{MARKERLABEL} \n \
 ALLELELABELS Tested_Allele Other_Allele \n \
 EFFECTLABEL BETA \n \
@@ -148,9 +171,12 @@ QUIT" > metal_command
         sed -i 's/,/\n/' metal_command
         metal metal_command
 
-        mv ~{prefix}.metal1.tsv ~{prefix}.metal.tsv
+        gzip ~{prefix}.metal1.tsv
+
+        Rscript process_metal_outputs.R ~{prefix}.metal1.tsv ~{prefix}.metal.tsv.gz
+
         mv ~{prefix}.metal1.tsv.info ~{prefix}.metal.tsv.info
-        gzip ~{prefix}.metal.tsv
+        #gzip ~{prefix}.metal.tsv
     >>>
 
     runtime {

@@ -2,12 +2,13 @@ library(tidyverse)
 library(data.table)
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 1 ) {
+if (length(args) != 2 ) {
   stop("Arguments to process_metal_output.R: \
      metal_output_file" )
 }
 
 metal_filename <- args[1]
+output_filename <- args[2]
 
 metal_output <- fread(metal_filename)
 
@@ -22,4 +23,4 @@ metal_output <- cbind (markers[,1:2], metal_output)
 #write output
 metal_prefix <- basename(metal_filename)
 
-write_tsv(metal_output, paste0("./", metal_prefix))
+write_tsv(metal_output, output_filename)
