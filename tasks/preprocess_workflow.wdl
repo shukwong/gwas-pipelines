@@ -637,7 +637,7 @@ task make_summary_plots {
         R --vanilla -e 'install.packages("optparse",repos = "https://cloud.r-project.org/")'
         R --vanilla -e 'install.packages("R.utils",repos = "https://cloud.r-project.org/")'
 
-        Rscript qqplot.R -f ~{association_summary_file} -o ~{prefix} --chrcol ~{CHR_column} -b POS 
+        Rscript qqplot.R -f ~{association_summary_file} -o ~{prefix} --chrcol ~{CHR_column} -b ~{BP_column} -p ~{pval_col} -m ~{minrep_col}
     >>>
 
     runtime {
