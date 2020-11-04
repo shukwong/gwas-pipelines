@@ -171,12 +171,12 @@ QUIT" > metal_command
         sed -i 's/,/\n/' metal_command
         metal metal_command
 
-        gzip ~{prefix}.metal1.tsv
+        echo -e "MarkerName\tCHR\tPOS\tAllele1\tAllele2\tEffect\tStdErr\tP-value\tDirection\tHetISq\tHetChiSq\tHetDf\tHetPVal\tTotalSampleSize">~{prefix}.metal.tsv
+        grep -v MarkerName ~{prefix}.metal1.tsv | tr ':' '\t' | awk '{print $1":"$2":"$3":"$4"\t"$0}' | cut -f1-3,6-16 >>~{prefix}.metal.tsv
 
-        Rscript process_metal_outputs.R ~{prefix}.metal1.tsv ~{prefix}.metal.tsv.gz
-
+        gzip ~{prefix}.metal.tsv
         mv ~{prefix}.metal1.tsv.info ~{prefix}.metal.tsv.info
-        #gzip ~{prefix}.metal.tsv
+        
     >>>
 
     runtime {
