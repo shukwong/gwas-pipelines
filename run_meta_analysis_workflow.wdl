@@ -119,7 +119,7 @@ workflow run_meta_analysis {
                 BP_column = "POS",
                 CHR_column = "CHR",
                 pval_col = "P-value",
-                minrep_col = "MarkerName",
+                minrep_col = "MarkerName"
         } 
 
     }

@@ -649,9 +649,9 @@ task make_summary_plots {
 	}
 
     output {
-        File manhattan_file =  prefix + "_P_manhattan.png"
-        File manhattan_loglog_file = prefix + "_P_manhattan_loglog.png"
-        File qqplot_file = prefix + "_P_qqplot.png"
+        File manhattan_file =  prefix + "_" + pval_col + "_manhattan.png"
+        File manhattan_loglog_file = prefix + "_" + pval_col "_manhattan_loglog.png"
+        File qqplot_file = prefix + "_" + pval_col + "_qqplot.png"
     }
 
 }
