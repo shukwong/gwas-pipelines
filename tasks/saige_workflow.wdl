@@ -13,6 +13,7 @@ workflow run_saige {
         String covarColList #covar list, separated by comma
     
         String setname
+        String batch_name
 
         Float? minMAF
         Float? minMAC
@@ -54,7 +55,8 @@ workflow run_saige {
         input: 
             saige_result_files = saige_step2_SPAtests.saige_output_file,
             pheno_col = phenoCol,
-            setname = setname
+            setname = setname,
+            batch_name = batch_name
     }
 
     output {
@@ -221,6 +223,7 @@ task combine_saige_results {
         Array[File] saige_result_files
         String pheno_col
         String setname
+        String batch_name
 
         Int? memory = 4
 	    Int? disk = 100
@@ -236,7 +239,7 @@ task combine_saige_results {
 
         cat ~{sep=' ' saige_result_files} | gzip -d | grep -v ^CHR | tr ' ' '\t' | awk '{print $1"\t"$2"\t"$3"\t"$5"\t"$4"\t"$10"\t"$11"\t"$13"\t"$9}' >> saige_~{setname}_~{pheno_col}_results_merged.tsv
         
-        gzip saige_~{setname}_~{pheno_col}_results_merged.tsv
+        gzip saige_~{pheno_col}~{setname}_~{batch_name}_results_merged.tsv
     >>>
 
     runtime {
@@ -248,6 +251,6 @@ task combine_saige_results {
 	}
 
     output {
-        File merged_saige_file = "saige_" + setname + "_" + pheno_col + "_results_merged.tsv.gz"
+        File merged_saige_file = "saige_" + pheno_col + "_" + setname + "_" + batch_name + "_results_merged.tsv.gz"
     }
 }

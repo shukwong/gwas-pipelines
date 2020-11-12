@@ -16,6 +16,7 @@ workflow bolt_workflow {
         String pheno_col
         String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
         String setname
+        String batch_name
 
         Array[Array[File]] bgen_files_and_indices
         #Array[Array[File]] bgen_files_and_indices = read_tsv(bgen_list_file)
@@ -59,6 +60,7 @@ workflow bolt_workflow {
            imputed_stats_files = run_bolt_lmm.imputed_stats_file, 
            pheno_col = pheno_col,
            setname = setname,
+           batch_name = batch_name, 
            n_samples = n_samples
     }
 
@@ -74,6 +76,7 @@ task combine_bolt_results {
         Array[File] imputed_stats_files
         String pheno_col
         String setname
+        String batch_name
         Int n_samples
 
         Int? memory = 4
@@ -91,9 +94,9 @@ task combine_bolt_results {
         
         echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP\tN" > bolt_~{setname}_~{pheno_col}_results_merged.tsv
 
-        cat ~{sep=' ' imputed_stats_files} | gzip -d | grep -v ^SNP | awk -v N_var=$N '{print $2"\t"$3"\t"$1"\t"$5"\t"$6"\t"$11"\t"$12"\t"$14"\t"N_var}' >> bolt_~{setname}_~{pheno_col}_results_merged.tsv
+        cat ~{sep=' ' imputed_stats_files} | gzip -d | grep -v ^SNP | awk -v N_var=$N '{print $2"\t"$3"\t"$1"\t"$5"\t"$6"\t"$11"\t"$12"\t"$14"\t"N_var}' >> bolt_~{pheno_col}~{setname}_~{batch_name}_results_merged.tsv
         
-        gzip bolt_~{setname}_~{pheno_col}_results_merged.tsv
+        gzip bolt_~{pheno_col}~{setname}_~{batch_name}_results_merged.tsv
     >>>
 
     runtime {
@@ -105,7 +108,7 @@ task combine_bolt_results {
 	}
 
     output {
-        File merged_stats_file = "bolt_~{setname}_~{pheno_col}_results_merged.tsv.gz"
+        File merged_stats_file = "bolt_" + setname + "_" + pheno_col + "_results_merged.tsv.gz"
     }
 }
 

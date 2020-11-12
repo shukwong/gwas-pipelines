@@ -63,6 +63,8 @@ workflow run_meta_analysis {
                 imputed_list_of_files = imputed_list_of_files,
                 impute_file_format = impute_file_format,
 
+                batch_name = batch_name,
+
                 useBOLT = useBOLT,
                 useSAIGE = useSAIGE,
 

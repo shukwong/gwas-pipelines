@@ -25,6 +25,7 @@ workflow run_association_test {
     String covar_sampleID_colname
     String phenotype_type
     String setname 
+    String batch_name
 
     Boolean? useBOLT
     Boolean? useSAIGE
@@ -91,6 +92,7 @@ workflow run_association_test {
                 covar_file = run_preprocess.covar_file,
                 covarColList = binary_covar_list + "," + continuous_covar_list + "," + pcs_as_string,
                 setname = setname,
+                batch_name = batch_name,
                 minMAF=minMAF,
                 minMAC=minMAC
         }
@@ -117,6 +119,7 @@ workflow run_association_test {
                     pheno_col = phenoCol,
                     qCovarCol = continuous_covar_list + "," + pcs_as_string,
                     setname = setname,
+                    batch_name = batch_name,
                     minMAF = minMAF
             }
 
