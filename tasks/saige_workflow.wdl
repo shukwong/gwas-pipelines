@@ -237,7 +237,7 @@ task combine_saige_results {
 
         echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP\tN" > saige_~{setname}_~{pheno_col}_results_merged.tsv
 
-        cat ~{sep=' ' saige_result_files} | gzip -d | grep -v ^CHR | tr ' ' '\t' | awk '{print $1"\t"$2"\t"$3"\t"$5"\t"$4"\t"$10"\t"$11"\t"$13"\t"$9}' >> saige_~{setname}_~{pheno_col}_results_merged.tsv
+        cat ~{sep=' ' saige_result_files} | gzip -d | grep -v ^CHR | tr ' ' '\t' | awk '{print $1"\t"$2"\t"$3"\t"$5"\t"$4"\t"$10"\t"$11"\t"$13"\t"$9}' >> saige_~{pheno_col}~{setname}_~{batch_name}_results_merged.tsv
         
         gzip saige_~{pheno_col}~{setname}_~{batch_name}_results_merged.tsv
     >>>
