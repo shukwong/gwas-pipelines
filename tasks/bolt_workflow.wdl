@@ -92,7 +92,7 @@ task combine_bolt_results {
 
         #echo -e "SNP\tCHR\tBP\tGENPOS\tALLELE1\tALLELE0\tA1FREQ\tINFO\tCHISQ_LINREG\tP_LINREG\tBETA\tSE\tCHISQ_BOLT_LMM_INF\tP_BOLT_LMM_INF\tCHISQ_BOLT_LMM\tP_BOLT_LMM" > bolt_~{pheno_col}_results_merged.tsv
         
-        echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP\tN" > bolt_~{setname}_~{pheno_col}_results_merged.tsv
+        echo -e "CHR\tPOS\tSNP\tTested_Allele\tOther_Allele\tBETA\tSE\tP\tN" > bolt_~{pheno_col}~{setname}_~{batch_name}_results_merged.tsv
 
         cat ~{sep=' ' imputed_stats_files} | gzip -d | grep -v ^SNP | awk -v N_var=$N '{print $2"\t"$3"\t"$1"\t"$5"\t"$6"\t"$11"\t"$12"\t"$14"\t"N_var}' >> bolt_~{pheno_col}~{setname}_~{batch_name}_results_merged.tsv
         
@@ -108,7 +108,7 @@ task combine_bolt_results {
 	}
 
     output {
-        File merged_stats_file = "bolt_" + setname + "_" + pheno_col + "_results_merged.tsv.gz"
+        File merged_stats_file = "bolt_" + pheno_col + "_" + setname + "_"  + batch_name + "_results_merged.tsv.gz" 
     }
 }
 
