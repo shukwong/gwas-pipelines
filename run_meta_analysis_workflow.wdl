@@ -165,7 +165,7 @@ CUSTOMVARIABLE TotalSampleSize \n \
 LABEL TotalSampleSize as N \n \
 SCHEME STDERR \n \
 GENOMICCONTROL ON \n \
-PROCESSFILE ~{sep=',PROCESSFILE ' association_summary_files}  \n\
+PROCESSFILE ~{sep=' \nPROCESSFILE ' association_summary_files}  \n\
 OUTFILE ~{prefix}.metal .tsv \n\
 ANALYZE HETEROGENEITY \n\
 QUIT" > metal_command
