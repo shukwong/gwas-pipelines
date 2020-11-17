@@ -156,7 +156,7 @@ task run_bolt_lmm {
             --phenoCol=~{pheno_col} \
             --LDscoresFile=~{ld_scores_file} \
             --geneticMapFile=~{genetic_map_file} \
-            --lmmForceNonInf \
+            --lmm \
             --LDscoresMatchBp \
             --bgenMinMAF=~{minMAF} \
             --numThreads=~{threads} \
