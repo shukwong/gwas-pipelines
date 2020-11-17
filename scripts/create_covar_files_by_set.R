@@ -2,9 +2,11 @@
 
 #variable info is defined in variable_info_tsv_file
 
-#TODO: add transformation for quantitative traits
-
 libraries_required <- c("tidyverse","data.table","jsonlite","fastDummies")
+
+inv_norm_transformation<-function(x) {
+  qnorm((rank(x,na.last="keep")-0.5)/sum(!is.na(x)))
+}
 
 for (libs in libraries_required) {
   if( !require(libs, character.only = T)) {
@@ -41,6 +43,9 @@ for (i in 1:nrow(variable_info)) {
     write_lines(variable_info$variableName[i], "phenotype_line.txt")
     write_lines("quantitative", "phenotype_type.txt")
     phenoCol = variable_info$variableName[i]
+    if (toupper(variable_info$transformation[i])=="INVERSENORMAL") {
+      covariates[[phenoCol]] = inv_norm_transformation(covariates[[phenoCol]])
+    }
     next
   } else if (variable_info$variableType[i]=="phenotype_binary") {
     write_lines(variable_info$variableName[i], "phenotype_line.txt")
