@@ -115,7 +115,7 @@ workflow run_meta_analysis {
                 FREQLABEL = ""
         }
 
-        call gwas_tasks.make_summary_plots as make_sage_plots {
+        call gwas_tasks.make_summary_plots as make_saige_plots {
             input: 
                 association_summary_file = run_metal_saige.metal_output_file,
                 BP_column = "POS",
@@ -133,6 +133,8 @@ workflow run_meta_analysis {
         File? bolt_metal_qqplot_file = make_bolt_plots.qqplot_file
         File? saige_metal_output_file =  run_metal_saige.metal_output_file
         File? saige_metal_info_file = run_metal_saige.metal_info_file
+        File? saige_metal_manhattan_file = make_saige_plots.manhattan_file
+        File? saige_metal_qqplot_file = make_saige_plots.qqplot_file
     }
 }
 
