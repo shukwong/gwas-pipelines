@@ -15,6 +15,7 @@ workflow bolt_workflow {
 
         String pheno_col
         String qCovarCol #need to figure out the best way to split string so for now the user would have to input things in the format "--qCovarCol=covar1 --qCovarCol=covar2"
+        String binaryCovarCol
         String setname
         String batch_name
 
@@ -49,7 +50,7 @@ workflow bolt_workflow {
             covar_file = covar_file,
             bgen_file = bgen_file_line[0],
             pheno_col = pheno_col,
-            #qCovars = qCovars
+            binaryCovarCol = binaryCovarCol,
             qCovarCol = qCovarCol,
             minMAF = minMAF
         }
@@ -127,6 +128,7 @@ task run_bolt_lmm {
         String pheno_col
         #Array[String] qCovars
         String qCovarCol 
+        String binaryCovarCol
     
 
         Float? minMAF=0.0001
@@ -143,6 +145,8 @@ task run_bolt_lmm {
 
         qCovars=$(echo ~{qCovarCol} | awk '{print ","$0}' |  sed 's/,/ --qCovarCol=/g')
 
+        binaryCovars=$(echo ~{binaryCovarCol} | awk '{print ","$0}' |  sed 's/,/ --covarCol=/g')
+
         bolt \
             --bed=~{genotype_bed} \
             --bim=~{genotype_bim} \
@@ -158,6 +162,7 @@ task run_bolt_lmm {
             --numThreads=~{threads} \
             --covarFile=~{covar_file} \
             $qCovars \
+            $binaryCovars \
             --statsFile=bolt_genotype_stats_~{pheno_col}.gz \
             --sampleFile=~{bgen_samples_file} \
             --statsFileBgenSnps=bolt_imputed_stats_~{pheno_col}.gz \

@@ -89,11 +89,14 @@ workflow gwas_subsets {
         }
 
     }
-
  
 	output {
-       Array[File?] merged_saige_file_list = run_meta_analysis.bolt_metal_output_file 
-       Array[File?] merged_bolt_file_list = run_meta_analysis.saige_metal_output_file
+       Array[File?] bolt_output_file_list = run_meta_analysis.saige_metal_output_file
+       Array[File?] bolt_metal_manhattan_file_list = run_meta_analysis.bolt_metal_manhattan_file
+       Array[File?] bolt_metal_qqplot_file_list = run_meta_analysis.bolt_metal_qqplot_file
+       Array[File?] saige_output_file_list = run_meta_analysis.bolt_metal_output_file 
+       Array[File?] saige_metal_manhattan_file_list = run_meta_analysis.saige_metal_manhattan_file
+       Array[File?] saige_metal_qqplot_file_list = run_meta_analysis.saige_metal_qqplot_file
  	}
     
 

@@ -118,6 +118,7 @@ workflow run_association_test {
                     bgen_files_and_indices = run_preprocess.bgen_files_and_indices,
                     pheno_col = phenoCol,
                     qCovarCol = continuous_covar_list + "," + pcs_as_string,
+                    binaryCovarCol = binary_covar_list,
                     setname = setname,
                     batch_name = batch_name,
                     minMAF = minMAF
