@@ -1,5 +1,7 @@
 # This is a GWAS pipeline that is intended to be run with biobank size data
 
+![gwas workflow](workflow_diagrams/gwas_workflow.png)
+
 The workflow is designed to be modular with a main workflow file that calls the preprocessing subworkflow and (optionally) the GWAS tools.
 Currently it supports [Bolt-LMM](https://storage.googleapis.com/broad-alkesgroup-public/BOLT-LMM/BOLT-LMM_manual.html) and [SAIGE](https://github.com/weizhouUMICH/SAIGE). 
 
