@@ -127,14 +127,12 @@ task get_covar_subsets {
 
         wget https://github.com/shukwong/gwas-pipelines/raw/master/scripts/create_covar_files_by_set.R	
 
-        R --vanilla -e 'install.packages("fastDummies",repos = "https://cloud.r-project.org/")'	
-
         Rscript create_covar_files_by_set.R ~{covariate_tsv_file} ~{variable_info_tsv_file} ~{sample_sets_json_file} 	
 
     >>>	
 
     runtime {	
-		docker: "rocker/tidyverse:4.0.0"	
+		docker: "rocker/tidyverse:4.0.1"	
 		memory: memory + " GiB"	
 		disks: "local-disk " + disk + " HDD"	
         cpu: threads	
