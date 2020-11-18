@@ -45,6 +45,7 @@ for (i in 1:nrow(variable_info)) {
     phenoCol = variable_info$variableName[i]
     if (toupper(variable_info$transformation[i])=="INVERSENORMAL") {
       covariates[[phenoCol]] = inv_norm_transformation(covariates[[phenoCol]])
+      print (paste0("inverse normal transformation of ", phenoCol, "..."))
     }
     next
   } else if (variable_info$variableType[i]=="phenotype_binary") {
