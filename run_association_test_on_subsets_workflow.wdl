@@ -132,7 +132,7 @@ task get_covar_subsets {
     >>>	
 
     runtime {	
-		docker: "rocker/tidyverse:4.0.1"	
+		docker: "rocker/tidyverse:4.0.0"	
 		memory: memory + " GiB"	
 		disks: "local-disk " + disk + " HDD"	
         cpu: threads	
