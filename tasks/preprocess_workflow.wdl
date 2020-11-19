@@ -670,7 +670,7 @@ task make_r_markdown_report {
     command {
         wget https://raw.githubusercontent.com/FINNGEN/saige-pipelines/master/scripts/generate_report.Rmd
 
-        R -e rmarkdown::render"('generate_report.Rmd',output_file="~{report_prefix}'_report.html", \
+        R -e rmarkdown::render"('generate_report.Rmd',output_file="~{report_prefix}_report.html", \
         params=list(manhattan_plot=~{manhattan_file}, \
         qqplot=~{qqplot_file}))" 
     }
