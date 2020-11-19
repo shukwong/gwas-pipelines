@@ -655,3 +655,36 @@ task make_summary_plots {
     }
 
 }
+
+task make_r_markdown_report {
+    input {
+        File manhattan_file
+        File qqplot_file 
+        String report_prefix 
+
+        Int? memory = 4
+        Int? disk = 20
+        Int? threads = 1
+    }
+
+    command {
+        wget https://raw.githubusercontent.com/FINNGEN/saige-pipelines/master/scripts/generate_report.Rmd
+
+        R -e rmarkdown::render"('generate_report.Rmd',output_file=~{report_prefix}'_report.html', \
+        params=list(manhattan_plot=~{manhattan_file}, \
+        qqplot=~{qqplot_file}))" 
+    }
+
+    runtime {
+		docker: "rocker/tidyverse:3.6.3"
+		memory: "${memory} GB"
+		disks: "local-disk ${disk} HDD"
+        cpu: "${threads}"
+		gpu: false
+	}
+
+    output {
+        File report_file =  report_prefix + "_report.html"
+    }
+
+}

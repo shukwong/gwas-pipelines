@@ -106,6 +106,13 @@ workflow run_meta_analysis {
                 pval_col = "P-value",
                 minrep_col = "MarkerName",
         } 
+
+        call gwas_tasks.make_r_markdown_report as make_bolt_report {
+            input:
+                manhattan_file = make_bolt_plots.manhattan_file,
+                qqplot_file = make_bolt_plots.qqplot_file,
+                report_prefix = setname + "_bolt"
+        }        
     }
 
     if (defined(useSAIGE) && useSAIGE ) {
@@ -125,6 +132,13 @@ workflow run_meta_analysis {
                 minrep_col = "MarkerName"
         } 
 
+        call gwas_tasks.make_r_markdown_report as make_saige_report {
+            input:
+                manhattan_file = make_saige_plots.manhattan_file,
+                qqplot_file = make_saige_plots.qqplot_file,
+                report_prefix = setname + "_saige"
+        }        
+
     }
 
     output {
@@ -132,10 +146,12 @@ workflow run_meta_analysis {
         File? bolt_metal_info_file = run_metal_bolt.metal_info_file
         File? bolt_metal_manhattan_file = make_bolt_plots.manhattan_file
         File? bolt_metal_qqplot_file = make_bolt_plots.qqplot_file
+        File? bolt_report_file = make_bolt_report.report_file
         File? saige_metal_output_file =  run_metal_saige.metal_output_file
         File? saige_metal_info_file = run_metal_saige.metal_info_file
         File? saige_metal_manhattan_file = make_saige_plots.manhattan_file
         File? saige_metal_qqplot_file = make_saige_plots.qqplot_file
+        File? saige_report_file = make_saige_report.report_file
     }
 }
 

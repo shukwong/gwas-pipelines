@@ -1,6 +1,9 @@
 ---
 title: "Association Study Summary Report"
 output: html_document
+params:
+  manhattan_plot: "manhattan_plot"
+  qqplot: "qqplot"
 ---
 
 ```{r setup, include=FALSE}
@@ -13,21 +16,17 @@ library(tidyverse)
 This is the Association Study Summary Report. For more details on the workflow see <https://github.com/shukwong/gwas-pipelines/blob/master/README.md>.
 
 Describe the input data
-```{r}
-ls()
-```
-
 
 ##  Plots
 
-Manhattan  plots
+Manhattan  plot
 ```{r echo=FALSE}
-plot(pressure)
+knitr::include_graphics(params$manhattan_plot)
 ```
 
-QQ  plots
+## QQ  plot
 ```{r echo=FALSE}
-plot(pressure)
+knitr::include_graphics(params$qqplot)
 ```
 
 ## links to GWAS summary data
