@@ -1,9 +1,13 @@
 # This is a GWAS pipeline that is intended to be run with biobank size data
 
+![gwas workflow](workflow_diagrams/gwas_workflow.png)
+
 The workflow is designed to be modular with a main workflow file that calls the preprocessing subworkflow and (optionally) the GWAS tools.
 Currently it supports [Bolt-LMM](https://storage.googleapis.com/broad-alkesgroup-public/BOLT-LMM/BOLT-LMM_manual.html) and [SAIGE](https://github.com/weizhouUMICH/SAIGE). 
 
 ## Inputs for the workflow
+
+![Input files](workflow_diagrams/gwas_input_files.png)
 
 ### genotype files (required) 
 The pipeline requires both directly genotyped and imputed genotype files. Currently, the pipeline supports directly genotype files in binary PLINK format, and imputed genotype files in either VCF or bgen format. The directly genotype files and the imputed genotypes *do not* have to be with the same genome build. For example, the directly genotypes can be of hg19 and the imputed genotypes can be of hg38. When the genome builds differ, the directly genotyped files will be converted to match with the imputed genotypes, and the user has to provide the *chain_file* for liftover. 
