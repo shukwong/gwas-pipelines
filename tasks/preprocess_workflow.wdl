@@ -21,6 +21,9 @@ workflow run_preprocess {
 
         String? dosageField
         String? id_delim
+
+        Int? numPCs
+        String? approx
     }    
 
     call get_cohort_samples {
@@ -58,7 +61,9 @@ workflow run_preprocess {
         input:
     	    genotype_bed = run_ld_prune.genotype_pruned_bed,
     	    genotype_bim = run_ld_prune.genotype_pruned_bim,
-    	    genotype_fam = run_ld_prune.genotype_pruned_fam
+    	    genotype_fam = run_ld_prune.genotype_pruned_fam,
+            numPCs = numPCs,
+            approx = approx
             
     }
 
@@ -145,6 +150,7 @@ task plink_pca {
         File genotype_fam
 
         String? approx = "approx"
+        Int? numPCs = 20
 
         Int? memory = 60
         Int? disk = 200
@@ -152,7 +158,7 @@ task plink_pca {
 
     command <<<
         set -euo pipefail
-        plink2 --bed ~{genotype_bed} --bim ~{genotype_bim} --fam ~{genotype_fam} --pca ~{approx} --out genotype_pruned_pca
+        plink2 --bed ~{genotype_bed} --bim ~{genotype_bim} --fam ~{genotype_fam} --pca ~{approx} ~{numPCs} --out genotype_pruned_pca
 	>>>
 
 	runtime {

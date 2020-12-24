@@ -43,6 +43,9 @@ workflow run_association_test {
 
     String? id_delim #delim character for vcf file, if not defined, double ID is assumed
     String? dosageField
+
+    Int? numPCs
+    String? approx
     }
 
     # Array[String] binary_covar_list_lines  = read_lines(get_covar_subsets.binary_covar_list_file)
@@ -71,7 +74,9 @@ workflow run_association_test {
             impute_file_format = impute_file_format,
             chain_file = chain_file,
             id_delim = id_delim,
-            dosageField = dosageField
+            dosageField = dosageField, 
+            numPCs = numPCs,
+            approx = approx
     }
 
     Array[String] pcs_as_string_lines = read_lines(run_preprocess.pcs_as_string_file)

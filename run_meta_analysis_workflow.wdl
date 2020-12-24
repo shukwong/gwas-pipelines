@@ -31,6 +31,9 @@ workflow run_meta_analysis {
 
         String? id_delim #delim character for vcf file, if not defined, double ID is assumed
         String? dosageField
+
+        Int? numPCs
+        String? approx
     }
 
     #read in batch information. If there are more than 1 batch we will meta analyze the summary results
@@ -86,7 +89,10 @@ workflow run_meta_analysis {
                 covar_sampleID_colname = covar_sampleID_colname,
                 phenotype_type = phenotype_type,
                 setname = setname,
-                dosageField = dosageField
+                dosageField = dosageField,
+
+                numPCs = numPCs,
+                approx = approx
         }
     }  
 
