@@ -34,7 +34,7 @@ task move_file_to_box {
     >>>    
 
 	runtime {
-		docker: "rclone/rclone:1"
+		docker: "quay.io/shukwong/rclone"
 	}
 
   output {
