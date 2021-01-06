@@ -30,7 +30,7 @@ task move_file_to_box {
 
     command <<<
         rclone --config=~{rclone_box_config} copy ~{input_file} box:~{box_directory}
-        rclone ls box:~{box_directory} > file_location_on_box.txt
+        rclone --config=~{rclone_box_config} ls box:~{box_directory} > file_location_on_box.txt
     >>>    
 
 	runtime {
