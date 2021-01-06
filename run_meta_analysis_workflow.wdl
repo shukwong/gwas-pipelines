@@ -125,10 +125,16 @@ workflow run_meta_analysis {
         }    
 
         if (defined(rclone_box_config) && defined(box_directory)) {
-            call move_files.move_outputs as bolt_move_files {
+            call move_files.move_outputs as bolt_move_reports {
                 input:
                 rclone_box_config = select_first([rclone_box_config]),
                 input_file = make_bolt_report.report_file,
+                box_directory = select_first([box_directory])
+            }
+            call move_files.move_outputs as bolt_move_outputs {
+                input:
+                rclone_box_config = select_first([rclone_box_config]),
+                input_file = run_metal_bolt.metal_output_file,
                 box_directory = select_first([box_directory])
             }
         }
@@ -159,10 +165,16 @@ workflow run_meta_analysis {
         }        
 
         if (defined(rclone_box_config) && defined(box_directory)) {
-            call move_files.move_outputs as saige_move_files {
+            call move_files.move_outputs as saige_move_reports {
                 input:
                     rclone_box_config = select_first([rclone_box_config]),
                     input_file = make_saige_report.report_file,
+                    box_directory = select_first([box_directory])
+            }
+            call move_files.move_outputs as saige_move_outputs {
+                input:
+                    rclone_box_config = select_first([rclone_box_config]),
+                    input_file = run_metal_saige.metal_output_file,
                     box_directory = select_first([box_directory])
             }
         }
