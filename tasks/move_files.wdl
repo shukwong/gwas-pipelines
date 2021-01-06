@@ -34,7 +34,7 @@ task move_file_to_box {
     >>>    
 
 	runtime {
-		docker: "docker://rclone/rclone:1"
+		docker: "rclone/rclone:1"
 	}
 
   output {
