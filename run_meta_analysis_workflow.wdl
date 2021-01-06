@@ -3,6 +3,7 @@ version development
 import "./run_association_test_workflow.wdl" as run_association_test 
 import "./tasks/preprocess_workflow.wdl" as gwas_tasks
 import "./tasks/meta_analysis_tasks.wdl" as meta_analysis_tasks
+import "tasks/move_files.wdl" as move_files
 
 workflow run_meta_analysis {
     input {
@@ -118,7 +119,15 @@ workflow run_meta_analysis {
                 manhattan_file = make_bolt_plots.manhattan_file,
                 qqplot_file = make_bolt_plots.qqplot_file,
                 report_prefix = setname + "_bolt"
-        }        
+        }    
+
+        call move_files.move_outputs {
+            input:
+                rclone_box_config = rclone_box_config
+                input_file = make_bolt_report.report_file
+                box_directory = box_directory
+        }
+    
     }
 
     if (defined(useSAIGE) && useSAIGE ) {
@@ -144,6 +153,13 @@ workflow run_meta_analysis {
                 qqplot_file = make_saige_plots.qqplot_file,
                 report_prefix = setname + "_saige"
         }        
+
+        call move_files.move_outputs {
+            input:
+                rclone_box_config = rclone_box_config
+                input_file = make_saige_report.report_file
+                box_directory = box_directory
+        }
 
     }
 
