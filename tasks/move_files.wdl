@@ -9,9 +9,9 @@ workflow move_outputs {
 
     call move_file_to_box {
       input:
-        File rclone_box_config
-        File input_file
-        String box_directory
+        rclone_box_config = rclone_box_config,
+        input_file = input_file,
+        box_directory = box_directory
     }
 
      output {
@@ -21,14 +21,15 @@ workflow move_outputs {
 
 task move_file_to_box {
     
-    File rclone_box_config
-    File input
-
-    String box_directory
+    input {
+      File rclone_box_config
+      File input_file
+      String box_directory
+    }
     
 
     command <<<
-		    rclone --config=~{rclone_box_config} copy ~{input} box:~{box_directory}
+        rclone --config=~{rclone_box_config} copy ~{input_file} box:~{box_directory}
         rclone ls box:~{box_directory} > file_location_on_box.txt
     >>>    
 
@@ -36,8 +37,8 @@ task move_file_to_box {
 		docker: "docker://rclone/rclone:1"
 	}
 
-    output {
+  output {
 	    String file_location_on_box = "file_location_on_box.txt"
-    }
+  }
 }
 
